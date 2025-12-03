@@ -12,6 +12,7 @@ interface MenuPreset {
   mode: 'full' | 'slot';
   createdAt: string;
   notes?: string;
+  tags?: string[]; // Array of tag strings
   items: { id: string; qty: number; price: number }[];
 }
 
@@ -56,6 +57,23 @@ export const Kitchen: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [presetFormData, setPresetFormData] = useState({
+    name: '',
+    notes: '',
+    tags: ''
+  });
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+
+  // Get all unique tags from presets
+  const allTags = Array.from(new Set(presets.flatMap(p => p.tags || []))).sort();
+
+  // Filter presets by tag
+  const filteredPresets = tagFilter
+    ? presets.filter(p => p.tags?.includes(tagFilter))
+    : presets;
 
   // Smart Menu Analytics
   const getItemAnalytics = (itemId: string, days: number = 7) => {
@@ -345,6 +363,107 @@ export const Kitchen: React.FC = () => {
     }
   };
 
+  const handleOpenSaveModal = () => {
+    // Generate auto-name
+    const now = new Date();
+    const dateName = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeName = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    setPresetFormData({
+      name: `Menu ${dateName} ${timeName}`,
+      notes: '',
+      tags: ''
+    });
+    setIsSaveModalOpen(true);
+  };
+
+  const handleSaveWithDetails = () => {
+    if (!presetFormData.name.trim()) {
+      alert('Please enter a preset name');
+      return;
+    }
+
+    // Get current items
+    let items: { id: string; qty: number; price: number }[] = [];
+    if (planMode === 'full') {
+      items = Object.entries(prepValues)
+        .filter(([_, val]) => val.qty > 0)
+        .map(([id, val]) => ({ id, qty: val.qty, price: val.price }));
+    } else {
+      items = slots
+        .filter(slot => slot.menuItemId && slot.qty > 0)
+        .map(slot => ({ id: slot.menuItemId!, qty: slot.qty, price: slot.price }));
+    }
+
+    if (items.length === 0) {
+      alert('No items to save. Please configure your menu first.');
+      return;
+    }
+
+    const tags = presetFormData.tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    const newPreset: MenuPreset = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: presetFormData.name.trim(),
+      mode: planMode,
+      createdAt: new Date().toISOString(),
+      notes: presetFormData.notes.trim() || undefined,
+      tags: tags.length > 0 ? tags : undefined,
+      items
+    };
+
+    setPresets(prev => [newPreset, ...prev]);
+    setIsSaveModalOpen(false);
+    alert(`Preset "${newPreset.name}" saved!`);
+  };
+
+  const handleOpenEditModal = () => {
+    if (!selectedPresetId) {
+      alert('Please select a preset to edit');
+      return;
+    }
+    const preset = presets.find(p => p.id === selectedPresetId);
+    if (!preset) {
+      alert('Preset not found');
+      return;
+    }
+    setPresetFormData({
+      name: preset.name,
+      notes: preset.notes || '',
+      tags: preset.tags?.join(', ') || ''
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePreset = () => {
+    if (!selectedPresetId) return;
+    if (!presetFormData.name.trim()) {
+      alert('Please enter a preset name');
+      return;
+    }
+
+    const tags = presetFormData.tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+
+    setPresets(prev => prev.map(p =>
+      p.id === selectedPresetId
+        ? {
+            ...p,
+            name: presetFormData.name.trim(),
+            notes: presetFormData.notes.trim() || undefined,
+            tags: tags.length > 0 ? tags : undefined
+          }
+        : p
+    ));
+
+    setIsEditModalOpen(false);
+    alert('Preset updated!');
+  };
+
   // Add Menu Item Handlers
   const handleAddMenuItem = () => {
     if (!newItemForm.name.trim()) {
@@ -465,29 +584,52 @@ export const Kitchen: React.FC = () => {
               {/* Menu Presets */}
               {!isLocked && presets.length > 0 && (
                   <Card className="bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200">
-                      <div className="flex items-center gap-3 mb-3">
-                          <Clock className="text-cyan-600" size={20} />
-                          <h3 className="font-bold text-slate-900">Saved Presets</h3>
+                      <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                              <Clock className="text-cyan-600" size={20} />
+                              <h3 className="font-bold text-slate-900">Saved Presets</h3>
+                          </div>
+                          {/* Tag Filter */}
+                          {allTags.length > 0 && (
+                              <select
+                                  value={tagFilter || ''}
+                                  onChange={(e) => setTagFilter(e.target.value || null)}
+                                  className="border border-cyan-300 rounded-lg px-2 py-1 text-xs focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                              >
+                                  <option value="">All Tags</option>
+                                  {allTags.map(tag => (
+                                      <option key={tag} value={tag}>{tag}</option>
+                                  ))}
+                              </select>
+                          )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mb-2">
                           <select
                               value={selectedPresetId || ''}
                               onChange={(e) => setSelectedPresetId(e.target.value || null)}
                               className="flex-1 border border-cyan-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                           >
                               <option value="">Select a preset...</option>
-                              {presets.map(preset => {
-                                  const date = new Date(preset.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                              {filteredPresets.map(preset => {
                                   const mode = preset.mode === 'full' ? '📋' : '🎰';
+                                  const tagsStr = preset.tags ? ` [${preset.tags.join(', ')}]` : '';
                                   return (
                                       <option key={preset.id} value={preset.id}>
-                                          {mode} {preset.name} ({preset.items.length} items)
+                                          {mode} {preset.name} ({preset.items.length} items){tagsStr}
                                       </option>
                                   );
                               })}
                           </select>
-                          <Button size="sm" variant="primary" onClick={handleLoadPreset} className="whitespace-nowrap">
+                      </div>
+                      <div className="flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => setIsPreviewModalOpen(true)} disabled={!selectedPresetId} className="whitespace-nowrap">
+                              👁 Preview
+                          </Button>
+                          <Button size="sm" variant="primary" onClick={handleLoadPreset} disabled={!selectedPresetId} className="whitespace-nowrap">
                               <Download size={14} className="mr-1" /> Load
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={handleOpenEditModal} disabled={!selectedPresetId} className="whitespace-nowrap">
+                              <Edit2 size={14} className="mr-1" /> Edit
                           </Button>
                           {selectedPresetId && (
                               <Button size="sm" variant="danger" onClick={() => handleDeletePreset(selectedPresetId)}>
@@ -498,11 +640,16 @@ export const Kitchen: React.FC = () => {
                   </Card>
               )}
 
-              {/* Save Preset Button */}
+              {/* Save Preset Buttons */}
               {!isLocked && (
-                  <Button size="sm" variant="outline" fullWidth onClick={handleSavePreset} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
-                      <Save size={14} className="mr-1" /> Quick Save as Preset
-                  </Button>
+                  <div className="flex gap-2">
+                      <Button size="sm" variant="outline" fullWidth onClick={handleSavePreset} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+                          <Save size={14} className="mr-1" /> Quick Save
+                      </Button>
+                      <Button size="sm" variant="secondary" fullWidth onClick={handleOpenSaveModal} className="bg-cyan-500 text-white hover:bg-cyan-600">
+                          <Plus size={14} className="mr-1" /> Save with Details
+                      </Button>
+                  </div>
               )}
 
               {/* Mode Toggle */}
@@ -916,6 +1063,170 @@ export const Kitchen: React.FC = () => {
             </Button>
             <Button onClick={handleAddMenuItem} fullWidth>
               <Plus size={16} className="mr-1" /> Add Item
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Preview Preset Modal */}
+      <Modal isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} title="Preset Preview">
+        {selectedPresetId && (() => {
+          const preset = presets.find(p => p.id === selectedPresetId);
+          if (!preset) return <p>Preset not found</p>;
+
+          return (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-bold text-slate-700">Name:</p>
+                <p className="text-base text-slate-900">{preset.name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-700">Mode:</p>
+                <p className="text-sm text-slate-600">{preset.mode === 'full' ? '📋 Full Menu Mode' : '🎰 Slot Mode'}</p>
+              </div>
+              {preset.tags && preset.tags.length > 0 && (
+                <div>
+                  <p className="text-sm font-bold text-slate-700">Tags:</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {preset.tags.map(tag => (
+                      <Badge key={tag} variant="info">{tag}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {preset.notes && (
+                <div>
+                  <p className="text-sm font-bold text-slate-700">Notes:</p>
+                  <p className="text-sm text-slate-600">{preset.notes}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm font-bold text-slate-700 mb-2">Items ({preset.items.length}):</p>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {preset.items.map(item => {
+                    const menuItem = menu.find(m => m.id === item.id);
+                    return (
+                      <div key={item.id} className="flex justify-between items-center bg-slate-50 rounded-lg p-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-slate-900">{menuItem?.name || 'Unknown Item'}</p>
+                          <p className="text-xs text-slate-500">{menuItem?.category}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-sky-600">Qty: {item.qty}</p>
+                          <p className="text-xs text-slate-500">{item.price} AED</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="text-xs text-slate-400 pt-2">
+                Created: {new Date(preset.createdAt).toLocaleString()}
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* Save with Details Modal */}
+      <Modal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} title="Save Preset with Details">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Preset Name*</label>
+            <input
+              type="text"
+              value={presetFormData.name}
+              onChange={(e) => setPresetFormData({ ...presetFormData, name: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              placeholder="Menu Dec 4 10:00"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Tags (comma-separated)</label>
+            <input
+              type="text"
+              value={presetFormData.tags}
+              onChange={(e) => setPresetFormData({ ...presetFormData, tags: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              placeholder="Monday, High Demand, Week 1"
+              list="tag-suggestions"
+            />
+            {allTags.length > 0 && (
+              <datalist id="tag-suggestions">
+                {allTags.map(tag => <option key={tag} value={tag} />)}
+              </datalist>
+            )}
+            {allTags.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1">Existing tags: {allTags.join(', ')}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Notes (optional)</label>
+            <textarea
+              value={presetFormData.notes}
+              onChange={(e) => setPresetFormData({ ...presetFormData, notes: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              rows={3}
+              placeholder="Add any notes about this menu configuration..."
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setIsSaveModalOpen(false)} fullWidth>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveWithDetails} fullWidth className="bg-cyan-500 text-white hover:bg-cyan-600">
+              <Save size={16} className="mr-1" /> Save Preset
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Preset Modal */}
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Preset">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Preset Name*</label>
+            <input
+              type="text"
+              value={presetFormData.name}
+              onChange={(e) => setPresetFormData({ ...presetFormData, name: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Tags (comma-separated)</label>
+            <input
+              type="text"
+              value={presetFormData.tags}
+              onChange={(e) => setPresetFormData({ ...presetFormData, tags: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              placeholder="Monday, High Demand, Week 1"
+              list="tag-suggestions-edit"
+            />
+            {allTags.length > 0 && (
+              <datalist id="tag-suggestions-edit">
+                {allTags.map(tag => <option key={tag} value={tag} />)}
+              </datalist>
+            )}
+            {allTags.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1">Existing tags: {allTags.join(', ')}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Notes (optional)</label>
+            <textarea
+              value={presetFormData.notes}
+              onChange={(e) => setPresetFormData({ ...presetFormData, notes: e.target.value })}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              rows={3}
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setIsEditModalOpen(false)} fullWidth>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdatePreset} fullWidth>
+              <Save size={16} className="mr-1" /> Update Preset
             </Button>
           </div>
         </div>
