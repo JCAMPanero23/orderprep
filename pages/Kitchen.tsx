@@ -19,6 +19,9 @@ export const Kitchen: React.FC = () => {
     Array(10).fill(null).map(() => ({ menuItemId: null, qty: 0, price: 15 }))
   );
 
+  // Published State
+  const [isPublished, setIsPublished] = useState(false);
+
   // Add Menu Item Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newItemForm, setNewItemForm] = useState({
@@ -127,7 +130,14 @@ export const Kitchen: React.FC = () => {
           }
 
           publishDailyMenu(itemsToPublish);
+          setIsPublished(true);
           alert('Menu Published for Today!');
+      }
+  };
+
+  const handleEditPublishedMenu = () => {
+      if (window.confirm('Are you sure you want to edit today\'s published menu? This may affect current orders.')) {
+          setIsPublished(false);
       }
   };
 
@@ -219,7 +229,7 @@ export const Kitchen: React.FC = () => {
       return;
     }
 
-    updateMenu(editForm);
+    updateMenu(editForm.id, editForm);
     setIsEditing(null);
     setEditForm(null);
     alert('Menu item updated successfully!');
@@ -257,8 +267,30 @@ export const Kitchen: React.FC = () => {
       {/* 1. PLAN TODAY */}
       {activeTab === 'plan' && (
           <div className="space-y-4 animate-in fade-in">
+              {/* Published Menu Lock */}
+              {isPublished && (
+                  <Card className="bg-green-50 border-green-200">
+                      <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                              <div className="bg-green-100 p-2 rounded-lg">
+                                  <Save className="text-green-600" size={20} />
+                              </div>
+                              <div>
+                                  <h3 className="font-bold text-green-900">Menu Published for Today</h3>
+                                  <p className="text-xs text-green-700 mt-1">
+                                      Your menu is live and available for orders. Edit with caution.
+                                  </p>
+                              </div>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={handleEditPublishedMenu} className="border-green-300 text-green-700 hover:bg-green-100">
+                              <Edit2 size={14} className="mr-1" /> Edit Today's Menu
+                          </Button>
+                      </div>
+                  </Card>
+              )}
+
               {/* Mode Toggle */}
-              <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+              <div className={`flex gap-2 bg-slate-100 p-1 rounded-lg ${isPublished ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button
                       onClick={() => setPlanMode('full')}
                       className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
@@ -279,7 +311,7 @@ export const Kitchen: React.FC = () => {
 
               {/* Smart Recommendations */}
               {orders.length > 5 && (
-                  <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+                  <Card className={`bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 ${isPublished ? 'opacity-50' : ''}`}>
                       <div className="flex items-start gap-3 mb-3">
                           <div className="bg-purple-100 p-2 rounded-lg">
                               <Lightbulb className="text-purple-600" size={20} />
@@ -328,7 +360,7 @@ export const Kitchen: React.FC = () => {
 
               {/* Full Menu Mode UI */}
               {planMode === 'full' && (
-                  <>
+                  <div className={isPublished ? 'opacity-50 pointer-events-none' : ''}>
                       <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl text-sm text-sky-800">
                           <p>Select items to cook today. Entering a quantity &gt; 0 makes it available in the Orders tab.</p>
                       </div>
@@ -372,12 +404,12 @@ export const Kitchen: React.FC = () => {
                       );
                   })}
                       </div>
-                  </>
+                  </div>
               )}
 
               {/* Slot Mode UI */}
               {planMode === 'slot' && (
-                  <>
+                  <div className={isPublished ? 'opacity-50 pointer-events-none' : ''}>
                       <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-sm text-amber-800">
                           <p>📍 <strong>Slot Mode:</strong> Select menu items for each slot. Perfect for fixed menu rotations!</p>
                       </div>
@@ -432,11 +464,16 @@ export const Kitchen: React.FC = () => {
                                           <div className="w-20">
                                               <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Qty</label>
                                               <input
-                                                  type="number"
+                                                  type="text"
+                                                  inputMode="numeric"
                                                   value={slot.qty}
-                                                  onChange={(e) => handleSlotChange(index, 'qty', e.target.value)}
+                                                  onChange={(e) => {
+                                                      const val = e.target.value;
+                                                      if (val === '' || !isNaN(Number(val))) {
+                                                          handleSlotChange(index, 'qty', val === '' ? 0 : val);
+                                                      }
+                                                  }}
                                                   className="w-full border border-slate-300 rounded-lg p-2 text-center font-bold text-sm"
-                                                  min="0"
                                               />
                                           </div>
 
@@ -444,11 +481,16 @@ export const Kitchen: React.FC = () => {
                                           <div className="w-20">
                                               <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
                                               <input
-                                                  type="number"
+                                                  type="text"
+                                                  inputMode="numeric"
                                                   value={slot.price}
-                                                  onChange={(e) => handleSlotChange(index, 'price', e.target.value)}
+                                                  onChange={(e) => {
+                                                      const val = e.target.value;
+                                                      if (val === '' || !isNaN(Number(val))) {
+                                                          handleSlotChange(index, 'price', val === '' ? 1 : val);
+                                                      }
+                                                  }}
                                                   className="w-full border border-slate-300 rounded-lg p-2 text-center text-sm"
-                                                  min="1"
                                               />
                                           </div>
                                       </div>
@@ -456,15 +498,17 @@ export const Kitchen: React.FC = () => {
                               );
                           })}
                       </div>
-                  </>
+                  </div>
               )}
 
-              {/* Publish Button (both modes) */}
-              <div className="sticky bottom-20 md:bottom-6 pt-4">
-                  <Button size="lg" fullWidth className="shadow-xl py-4" onClick={handlePublish}>
-                      <Save className="mr-2" size={20} /> Publish Today's Menu
-                  </Button>
-              </div>
+              {/* Publish Button (both modes) - Only show when not published */}
+              {!isPublished && (
+                  <div className="sticky bottom-20 md:bottom-6 pt-4">
+                      <Button size="lg" fullWidth className="shadow-xl py-4" onClick={handlePublish}>
+                          <Save className="mr-2" size={20} /> Publish Today's Menu
+                      </Button>
+                  </div>
+              )}
           </div>
       )}
 
