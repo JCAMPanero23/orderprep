@@ -6,10 +6,17 @@ import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban } f
 import { Customer } from '../types';
 
 export const Customers: React.FC = () => {
-  const { customers, updateCustomer, orders } = useAppStore();
+  const { customers, updateCustomer, addCustomer, orders } = useAppStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Customer>>({});
   const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
+  const [isAddCustomerModalOpen, setAddCustomerModalOpen] = useState(false);
+  const [newCustomerForm, setNewCustomerForm] = useState({
+    name: '',
+    phone: '',
+    unitNumber: '',
+    location: ''
+  });
 
   const startEdit = (c: Customer) => {
       setEditingId(c.id);
@@ -21,6 +28,40 @@ export const Customers: React.FC = () => {
           updateCustomer(editingId, editForm);
           setEditingId(null);
       }
+  };
+
+  const handleAddCustomer = () => {
+    // Validation
+    if (!newCustomerForm.name.trim()) {
+        alert("Please enter customer name");
+        return;
+    }
+    if (!newCustomerForm.phone.trim()) {
+        alert("Please enter phone number");
+        return;
+    }
+
+    // Create new customer object
+    const newCustomer: Customer = {
+        id: `cust_${Date.now()}`,
+        name: newCustomerForm.name.trim(),
+        phone: newCustomerForm.phone.trim(),
+        unitNumber: newCustomerForm.unitNumber.trim(),
+        location: newCustomerForm.location.trim(),
+        totalSpent: 0,
+        totalOrders: 0,
+        lastOrderDate: new Date().toISOString()
+    };
+
+    // Add to store
+    addCustomer(newCustomer);
+
+    // Close modal and reset form
+    setAddCustomerModalOpen(false);
+    setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+
+    // Success feedback
+    alert(`Customer "${newCustomer.name}" added successfully!`);
   };
 
   const getPaymentBehaviorBadge = (customer: Customer) => {
@@ -45,9 +86,14 @@ export const Customers: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Users className="text-sky-600" size={24} />
-        <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Users className="text-sky-600" size={24} />
+          <h1 className="text-2xl font-bold text-slate-900">Customers</h1>
+        </div>
+        <Button onClick={() => setAddCustomerModalOpen(true)}>
+          + Add Customer
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -135,6 +181,61 @@ export const Customers: React.FC = () => {
                 <Button fullWidth onClick={saveEdit}>Save Changes</Button>
             </div>
          </div>
+      </Modal>
+
+      {/* Add New Customer Modal */}
+      <Modal
+        isOpen={isAddCustomerModalOpen}
+        onClose={() => {
+          setAddCustomerModalOpen(false);
+          setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+        }}
+        title="Add New Customer"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Name *"
+            value={newCustomerForm.name}
+            onChange={e => setNewCustomerForm(prev => ({...prev, name: e.target.value}))}
+            placeholder="Customer name"
+          />
+          <Input
+            label="Phone *"
+            value={newCustomerForm.phone}
+            onChange={e => setNewCustomerForm(prev => ({...prev, phone: e.target.value}))}
+            placeholder="05XXXXXXXX"
+            type="tel"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Unit Number"
+              value={newCustomerForm.unitNumber}
+              onChange={e => setNewCustomerForm(prev => ({...prev, unitNumber: e.target.value}))}
+              placeholder="e.g. 501"
+            />
+            <Input
+              label="Building/Location"
+              value={newCustomerForm.location}
+              onChange={e => setNewCustomerForm(prev => ({...prev, location: e.target.value}))}
+              placeholder="Optional"
+            />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => {
+                setAddCustomerModalOpen(false);
+                setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+              }}
+            >
+              Cancel
+            </Button>
+            <Button fullWidth onClick={handleAddCustomer}>
+              Add Customer
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Payment History Modal */}
