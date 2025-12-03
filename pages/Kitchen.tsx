@@ -2,8 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Input, Badge, Modal } from '../components/UI';
-import { ChefHat, ShoppingBasket, BookOpen, Save, Plus, TrendingUp, TrendingDown, Lightbulb, Edit2 } from 'lucide-react';
+import { ChefHat, ShoppingBasket, BookOpen, Save, Plus, TrendingUp, TrendingDown, Lightbulb, Edit2, Download, Clock } from 'lucide-react';
 import { MenuItem } from '../types';
+
+// Menu Preset Interface
+interface MenuPreset {
+  id: string;
+  name: string;
+  mode: 'full' | 'slot';
+  createdAt: string;
+  notes?: string;
+  items: { id: string; qty: number; price: number }[];
+}
 
 export const Kitchen: React.FC = () => {
   const { menu, inventory, updateMenu, addMenuItem, publishDailyMenu, orders } = useAppStore();
@@ -12,8 +22,11 @@ export const Kitchen: React.FC = () => {
   // Plan State
   const [prepValues, setPrepValues] = useState<Record<string, { qty: number, price: number }>>({});
 
-  // Plan Mode State (Full Menu vs Slot Mode)
-  const [planMode, setPlanMode] = useState<'full' | 'slot'>('full');
+  // Plan Mode State (Full Menu vs Slot Mode) - persisted in localStorage
+  const [planMode, setPlanMode] = useState<'full' | 'slot'>(() => {
+    const saved = localStorage.getItem('orderprep_planMode');
+    return (saved === 'slot' || saved === 'full') ? saved : 'full';
+  });
   const [slotCount, setSlotCount] = useState(10); // Default 10 slots
   const [slots, setSlots] = useState<Array<{ menuItemId: string | null, qty: number, price: number }>>(
     Array(10).fill(null).map(() => ({ menuItemId: null, qty: 0, price: 15 }))
@@ -36,6 +49,13 @@ export const Kitchen: React.FC = () => {
   // Edit Menu Item State
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<MenuItem | null>(null);
+
+  // Menu Preset State
+  const [presets, setPresets] = useState<MenuPreset[]>(() => {
+    const saved = localStorage.getItem('orderprep_menuPresets');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
   // Smart Menu Analytics
   const getItemAnalytics = (itemId: string, days: number = 7) => {
@@ -96,24 +116,59 @@ export const Kitchen: React.FC = () => {
       }
   };
 
-  // Bug Fix #2: Initialize prepValues for all menu items when Plan tab is active
-  // This ensures prices are saved even if user doesn't touch the input
+  // Initialize prepValues and sync with published menu data
+  // Enhancement: Retain published items when editing
   useEffect(() => {
     if (activeTab === 'plan' && menu.length > 0) {
       const initialValues: Record<string, { qty: number, price: number }> = {};
-      menu.forEach(item => {
-        if (!prepValues[item.id]) {
+
+      if (isPublished) {
+        // Sync ALL values with published menu data (for editing published menu)
+        menu.forEach(item => {
           initialValues[item.id] = {
-            qty: item.dailyLimit || 10,
+            qty: item.dailyLimit || 0,
             price: item.price
           };
+        });
+        setPrepValues(initialValues);
+
+        // Reconstruct slots from published data (for Slot Mode)
+        const publishedItems = menu.filter(item => item.dailyLimit && item.dailyLimit > 0);
+        if (publishedItems.length > 0 && planMode === 'slot') {
+          const newSlots = Array(slotCount).fill(null).map((_, index) => {
+            const item = publishedItems[index];
+            return item
+              ? { menuItemId: item.id, qty: item.dailyLimit!, price: item.price }
+              : { menuItemId: null, qty: 0, price: 15 };
+          });
+          setSlots(newSlots);
         }
-      });
-      if (Object.keys(initialValues).length > 0) {
-        setPrepValues(prev => ({ ...prev, ...initialValues }));
+      } else {
+        // Initialize only missing values (default behavior)
+        menu.forEach(item => {
+          if (!prepValues[item.id]) {
+            initialValues[item.id] = {
+              qty: item.dailyLimit || 10,
+              price: item.price
+            };
+          }
+        });
+        if (Object.keys(initialValues).length > 0) {
+          setPrepValues(prev => ({ ...prev, ...initialValues }));
+        }
       }
     }
-  }, [activeTab, menu]);
+  }, [activeTab, menu, isPublished]);
+
+  // Persist planMode to localStorage
+  useEffect(() => {
+    localStorage.setItem('orderprep_planMode', planMode);
+  }, [planMode]);
+
+  // Persist presets to localStorage
+  useEffect(() => {
+    localStorage.setItem('orderprep_menuPresets', JSON.stringify(presets));
+  }, [presets]);
 
   const handlePublish = () => {
       if (window.confirm('This will update "Today\'s Lunch Items" and reset stock counts. Continue?')) {
@@ -172,6 +227,122 @@ export const Kitchen: React.FC = () => {
         return prev.slice(0, newCount);
       }
     });
+  };
+
+  // Enhancement: Mode Switching with Data Preservation
+  const handleSwitchToSlotMode = () => {
+    // Convert prepValues to slots (preserve Full Menu data)
+    const itemsWithQty = Object.entries(prepValues)
+      .filter(([_, val]) => val.qty > 0)
+      .map(([id, val]) => ({ menuItemId: id, qty: val.qty, price: val.price }));
+
+    const newSlots = Array(slotCount).fill(null).map((_, index) => {
+      return itemsWithQty[index] || { menuItemId: null, qty: 0, price: 15 };
+    });
+
+    setSlots(newSlots);
+    setPlanMode('slot');
+  };
+
+  const handleSwitchToFullMode = () => {
+    // Convert slots to prepValues (preserve Slot data)
+    const updatedPrepValues = { ...prepValues };
+
+    slots.forEach(slot => {
+      if (slot.menuItemId) {
+        updatedPrepValues[slot.menuItemId] = {
+          qty: slot.qty,
+          price: slot.price
+        };
+      }
+    });
+
+    setPrepValues(updatedPrepValues);
+    setPlanMode('full');
+  };
+
+  // Preset System Handlers
+  const handleSavePreset = () => {
+    // Generate auto-name with current date
+    const now = new Date();
+    const dateName = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeName = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const autoName = `Menu ${dateName} ${timeName}`;
+
+    // Get current items based on mode
+    let items: { id: string; qty: number; price: number }[] = [];
+    if (planMode === 'full') {
+      items = Object.entries(prepValues)
+        .filter(([_, val]) => val.qty > 0)
+        .map(([id, val]) => ({ id, qty: val.qty, price: val.price }));
+    } else {
+      items = slots
+        .filter(slot => slot.menuItemId && slot.qty > 0)
+        .map(slot => ({ id: slot.menuItemId!, qty: slot.qty, price: slot.price }));
+    }
+
+    if (items.length === 0) {
+      alert('No items to save. Please configure your menu first.');
+      return;
+    }
+
+    const newPreset: MenuPreset = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: autoName,
+      mode: planMode,
+      createdAt: now.toISOString(),
+      items
+    };
+
+    setPresets(prev => [newPreset, ...prev]);
+    alert(`Preset saved as "${autoName}"!`);
+  };
+
+  const handleLoadPreset = () => {
+    if (!selectedPresetId) {
+      alert('Please select a preset to load');
+      return;
+    }
+
+    const preset = presets.find(p => p.id === selectedPresetId);
+    if (!preset) {
+      alert('Preset not found');
+      return;
+    }
+
+    // Switch to the preset's mode first
+    if (preset.mode !== planMode) {
+      setPlanMode(preset.mode);
+    }
+
+    // Load items based on preset mode
+    if (preset.mode === 'full') {
+      const newPrepValues: Record<string, { qty: number, price: number }> = {};
+      preset.items.forEach(item => {
+        newPrepValues[item.id] = { qty: item.qty, price: item.price };
+      });
+      setPrepValues(newPrepValues);
+    } else {
+      const newSlots = Array(slotCount).fill(null).map((_, index) => {
+        const item = preset.items[index];
+        return item
+          ? { menuItemId: item.id, qty: item.qty, price: item.price }
+          : { menuItemId: null, qty: 0, price: 15 };
+      });
+      setSlots(newSlots);
+    }
+
+    alert(`Preset "${preset.name}" loaded!`);
+  };
+
+  const handleDeletePreset = (presetId: string) => {
+    if (window.confirm('Are you sure you want to delete this preset?')) {
+      setPresets(prev => prev.filter(p => p.id !== presetId));
+      if (selectedPresetId === presetId) {
+        setSelectedPresetId(null);
+      }
+      alert('Preset deleted');
+    }
   };
 
   // Add Menu Item Handlers
@@ -291,10 +462,53 @@ export const Kitchen: React.FC = () => {
                   </Card>
               )}
 
+              {/* Menu Presets */}
+              {!isLocked && presets.length > 0 && (
+                  <Card className="bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200">
+                      <div className="flex items-center gap-3 mb-3">
+                          <Clock className="text-cyan-600" size={20} />
+                          <h3 className="font-bold text-slate-900">Saved Presets</h3>
+                      </div>
+                      <div className="flex gap-2">
+                          <select
+                              value={selectedPresetId || ''}
+                              onChange={(e) => setSelectedPresetId(e.target.value || null)}
+                              className="flex-1 border border-cyan-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                          >
+                              <option value="">Select a preset...</option>
+                              {presets.map(preset => {
+                                  const date = new Date(preset.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                  const mode = preset.mode === 'full' ? '📋' : '🎰';
+                                  return (
+                                      <option key={preset.id} value={preset.id}>
+                                          {mode} {preset.name} ({preset.items.length} items)
+                                      </option>
+                                  );
+                              })}
+                          </select>
+                          <Button size="sm" variant="primary" onClick={handleLoadPreset} className="whitespace-nowrap">
+                              <Download size={14} className="mr-1" /> Load
+                          </Button>
+                          {selectedPresetId && (
+                              <Button size="sm" variant="danger" onClick={() => handleDeletePreset(selectedPresetId)}>
+                                  ✕
+                              </Button>
+                          )}
+                      </div>
+                  </Card>
+              )}
+
+              {/* Save Preset Button */}
+              {!isLocked && (
+                  <Button size="sm" variant="outline" fullWidth onClick={handleSavePreset} className="border-cyan-300 text-cyan-700 hover:bg-cyan-50">
+                      <Save size={14} className="mr-1" /> Quick Save as Preset
+                  </Button>
+              )}
+
               {/* Mode Toggle */}
               <div className={`flex gap-2 bg-slate-100 p-1 rounded-lg ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button
-                      onClick={() => setPlanMode('full')}
+                      onClick={handleSwitchToFullMode}
                       className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
                           planMode === 'full' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'
                       }`}
@@ -302,7 +516,7 @@ export const Kitchen: React.FC = () => {
                       📋 Full Menu Mode
                   </button>
                   <button
-                      onClick={() => setPlanMode('slot')}
+                      onClick={handleSwitchToSlotMode}
                       className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
                           planMode === 'slot' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'
                       }`}
