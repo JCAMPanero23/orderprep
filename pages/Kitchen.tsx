@@ -188,6 +188,88 @@ export const Kitchen: React.FC = () => {
     localStorage.setItem('orderprep_menuPresets', JSON.stringify(presets));
   }, [presets]);
 
+  // Create sample presets on first load
+  useEffect(() => {
+    if (presets.length === 0 && menu.length > 0) {
+      const samplePresets: MenuPreset[] = [
+        {
+          id: 'sample-mon',
+          name: 'Monday Menu - Week 1',
+          mode: 'full',
+          createdAt: new Date('2024-12-02T10:00:00').toISOString(),
+          tags: ['Monday', 'Week 1', 'Popular'],
+          notes: 'High demand day - Roast Pork combo',
+          items: [
+            { id: '1', qty: 15, price: 15 }, // Roast Pork
+            { id: '2', qty: 12, price: 15 }, // Honey Ribs
+            { id: '4', qty: 10, price: 15 }, // Chicken Broccoli
+            { id: '7', qty: 8, price: 10 },  // Brownies
+            { id: '8', qty: 5, price: 10 }   // Peanuts
+          ]
+        },
+        {
+          id: 'sample-tue',
+          name: 'Tuesday Menu - Week 1',
+          mode: 'slot',
+          createdAt: new Date('2024-12-03T10:00:00').toISOString(),
+          tags: ['Tuesday', 'Week 1'],
+          notes: 'Balanced rotation',
+          items: [
+            { id: '2', qty: 10, price: 15 }, // Honey Ribs
+            { id: '3', qty: 10, price: 15 }, // Fried Pork Belly
+            { id: '4', qty: 8, price: 15 },  // Chicken Broccoli
+            { id: '5', qty: 8, price: 15 },  // Spam Terriyaki
+            { id: '6', qty: 12, price: 15 }  // Siomai
+          ]
+        },
+        {
+          id: 'sample-wed',
+          name: 'Wednesday Menu - Week 1',
+          mode: 'full',
+          createdAt: new Date('2024-12-04T10:00:00').toISOString(),
+          tags: ['Wednesday', 'Week 1', 'Mid-week'],
+          items: [
+            { id: '1', qty: 12, price: 15 }, // Roast Pork
+            { id: '3', qty: 10, price: 15 }, // Fried Pork Belly
+            { id: '6', qty: 15, price: 15 }, // Siomai
+            { id: '7', qty: 10, price: 10 }  // Brownies
+          ]
+        },
+        {
+          id: 'sample-thu',
+          name: 'Thursday Menu - Week 1',
+          mode: 'full',
+          createdAt: new Date('2024-12-05T10:00:00').toISOString(),
+          tags: ['Thursday', 'Week 1'],
+          notes: 'Light options focus',
+          items: [
+            { id: '4', qty: 12, price: 15 }, // Chicken Broccoli
+            { id: '5', qty: 10, price: 15 }, // Spam Terriyaki
+            { id: '6', qty: 15, price: 15 }, // Siomai
+            { id: '8', qty: 8, price: 10 }   // Peanuts
+          ]
+        },
+        {
+          id: 'sample-fri',
+          name: 'Friday Menu - Week 1',
+          mode: 'full',
+          createdAt: new Date('2024-12-06T10:00:00').toISOString(),
+          tags: ['Friday', 'Week 1', 'Popular', 'End of Week'],
+          notes: 'Best sellers combo - end of week boost',
+          items: [
+            { id: '1', qty: 18, price: 15 }, // Roast Pork
+            { id: '2', qty: 15, price: 15 }, // Honey Ribs
+            { id: '3', qty: 12, price: 15 }, // Fried Pork Belly
+            { id: '7', qty: 12, price: 10 }, // Brownies
+            { id: '8', qty: 10, price: 10 }  // Peanuts
+          ]
+        }
+      ];
+
+      setPresets(samplePresets);
+    }
+  }, [menu]);
+
   const handlePublish = () => {
       if (window.confirm('This will update "Today\'s Lunch Items" and reset stock counts. Continue?')) {
           let itemsToPublish;
