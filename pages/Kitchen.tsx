@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
-import { Card, Button, Input, Badge } from '../components/UI';
-import { ChefHat, ShoppingBasket, BookOpen, Save, Plus, TrendingUp, TrendingDown, Lightbulb } from 'lucide-react';
+import { Card, Button, Input, Badge, Modal } from '../components/UI';
+import { ChefHat, ShoppingBasket, BookOpen, Save, Plus, TrendingUp, TrendingDown, Lightbulb, Edit2 } from 'lucide-react';
 import { MenuItem } from '../types';
 
 export const Kitchen: React.FC = () => {
@@ -12,9 +12,18 @@ export const Kitchen: React.FC = () => {
   // Plan State
   const [prepValues, setPrepValues] = useState<Record<string, { qty: number, price: number }>>({});
 
-  // Recipe/Menu State
+  // Add Menu Item Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newItemForm, setNewItemForm] = useState({
+    name: '',
+    description: '',
+    category: 'Main' as 'Main' | 'Dessert' | 'Snack' | 'Beverage',
+    price: 15
+  });
+
+  // Edit Menu Item State
   const [isEditing, setIsEditing] = useState<string | null>(null);
-  const [newItemName, setNewItemName] = useState('');
+  const [editForm, setEditForm] = useState<MenuItem | null>(null);
 
   // Smart Menu Analytics
   const getItemAnalytics = (itemId: string, days: number = 7) => {
@@ -99,10 +108,73 @@ export const Kitchen: React.FC = () => {
           const itemsToPublish = Object.entries(prepValues)
             .filter(([_, val]) => val.qty > 0)
             .map(([id, val]) => ({ id, qty: val.qty, price: val.price }));
-            
+
           publishDailyMenu(itemsToPublish);
           alert('Menu Published for Today!');
       }
+  };
+
+  // Add Menu Item Handlers
+  const handleAddMenuItem = () => {
+    if (!newItemForm.name.trim()) {
+      alert('Please enter a menu item name');
+      return;
+    }
+    if (newItemForm.price <= 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+
+    const newItem: MenuItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newItemForm.name.trim(),
+      description: newItemForm.description.trim() || undefined,
+      category: newItemForm.category,
+      price: newItemForm.price,
+      isAvailable: false,
+      dailyLimit: 10
+    };
+
+    addMenuItem(newItem);
+
+    // Reset form
+    setNewItemForm({
+      name: '',
+      description: '',
+      category: 'Main',
+      price: 15
+    });
+    setIsAddModalOpen(false);
+    alert('Menu item added successfully!');
+  };
+
+  // Edit Menu Item Handlers
+  const startEdit = (item: MenuItem) => {
+    setIsEditing(item.id);
+    setEditForm({ ...item });
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(null);
+    setEditForm(null);
+  };
+
+  const saveEdit = () => {
+    if (!editForm) return;
+
+    if (!editForm.name.trim()) {
+      alert('Please enter a menu item name');
+      return;
+    }
+    if (editForm.price <= 0) {
+      alert('Please enter a valid price');
+      return;
+    }
+
+    updateMenu(editForm);
+    setIsEditing(null);
+    setEditForm(null);
+    alert('Menu item updated successfully!');
   };
 
   return (
@@ -243,30 +315,97 @@ export const Kitchen: React.FC = () => {
           <div className="space-y-3 animate-in fade-in">
               <div className="flex justify-between items-center mb-2">
                   <h2 className="font-bold text-slate-800">Master Menu List</h2>
-                  <Button size="sm" variant="outline" onClick={() => {
-                      const name = prompt("Enter new item name:");
-                      if (name) addMenuItem({ 
-                          id: Math.random().toString(36), 
-                          name, 
-                          price: 15, 
-                          category: 'Main', 
-                          isAvailable: false 
-                        });
-                  }}>
+                  <Button size="sm" variant="outline" onClick={() => setIsAddModalOpen(true)}>
                       <Plus size={16} className="mr-1" /> Add Item
                   </Button>
               </div>
-              {menu.map(item => (
-                  <Card key={item.id} className="p-3">
-                      <div className="flex justify-between items-start">
-                          <div>
-                              <p className="font-bold text-slate-900">{item.name}</p>
-                              <p className="text-xs text-slate-500">{item.description || 'No description'}</p>
-                          </div>
-                          <Badge variant="neutral">{item.category}</Badge>
-                      </div>
-                  </Card>
-              ))}
+              {menu.map(item => {
+                  const isEditingThis = isEditing === item.id;
+                  const formData = isEditingThis && editForm ? editForm : item;
+
+                  return (
+                      <Card key={item.id} className="p-3">
+                          {!isEditingThis ? (
+                              // View Mode
+                              <div>
+                                  <div className="flex justify-between items-start mb-2">
+                                      <div className="flex-1">
+                                          <p className="font-bold text-slate-900">{item.name}</p>
+                                          <p className="text-xs text-slate-500">{item.description || 'No description'}</p>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                          <Badge variant="neutral">{item.category}</Badge>
+                                          <Button size="sm" variant="ghost" onClick={() => startEdit(item)}>
+                                              <Edit2 size={14} className="mr-1" /> Edit
+                                          </Button>
+                                      </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                      <span className="text-sm font-bold text-sky-600 bg-sky-50 px-2 py-1 rounded">
+                                          {item.price} AED
+                                      </span>
+                                      <span className="text-xs text-slate-400">Limit: {item.dailyLimit || 10}</span>
+                                  </div>
+                              </div>
+                          ) : (
+                              // Edit Mode
+                              <div className="space-y-3">
+                                  <div>
+                                      <label className="block text-xs font-bold text-slate-700 mb-1">Name</label>
+                                      <input
+                                          type="text"
+                                          value={formData.name}
+                                          onChange={(e) => setEditForm({ ...formData, name: e.target.value })}
+                                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                      />
+                                  </div>
+                                  <div>
+                                      <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
+                                      <textarea
+                                          value={formData.description || ''}
+                                          onChange={(e) => setEditForm({ ...formData, description: e.target.value })}
+                                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                          rows={2}
+                                      />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                          <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                                          <select
+                                              value={formData.category}
+                                              onChange={(e) => setEditForm({ ...formData, category: e.target.value as any })}
+                                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                          >
+                                              <option value="Main">Main</option>
+                                              <option value="Dessert">Dessert</option>
+                                              <option value="Snack">Snack</option>
+                                              <option value="Beverage">Beverage</option>
+                                          </select>
+                                      </div>
+                                      <div>
+                                          <label className="block text-xs font-bold text-slate-700 mb-1">Price (AED)</label>
+                                          <input
+                                              type="number"
+                                              value={formData.price}
+                                              onChange={(e) => setEditForm({ ...formData, price: Number(e.target.value) })}
+                                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                              min="1"
+                                          />
+                                      </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                      <Button size="sm" onClick={saveEdit} fullWidth>
+                                          <Save size={14} className="mr-1" /> Save
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={cancelEdit} fullWidth>
+                                          Cancel
+                                      </Button>
+                                  </div>
+                              </div>
+                          )}
+                      </Card>
+                  );
+              })}
           </div>
       )}
 
@@ -300,6 +439,69 @@ export const Kitchen: React.FC = () => {
               )}
           </div>
       )}
+
+      {/* Add Menu Item Modal */}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Menu Item">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Name *</label>
+            <input
+              type="text"
+              value={newItemForm.name}
+              onChange={(e) => setNewItemForm({ ...newItemForm, name: e.target.value })}
+              placeholder="e.g., Honey Garlic Pork Ribs"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Description</label>
+            <textarea
+              value={newItemForm.description}
+              onChange={(e) => setNewItemForm({ ...newItemForm, description: e.target.value })}
+              placeholder="Brief description of the dish..."
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Category *</label>
+              <select
+                value={newItemForm.category}
+                onChange={(e) => setNewItemForm({ ...newItemForm, category: e.target.value as any })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+              >
+                <option value="Main">Main</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Snack">Snack</option>
+                <option value="Beverage">Beverage</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Price (AED) *</label>
+              <input
+                type="number"
+                value={newItemForm.price}
+                onChange={(e) => setNewItemForm({ ...newItemForm, price: Number(e.target.value) })}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                min="1"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setIsAddModalOpen(false)} fullWidth>
+              Cancel
+            </Button>
+            <Button onClick={handleAddMenuItem} fullWidth>
+              <Plus size={16} className="mr-1" /> Add Item
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
