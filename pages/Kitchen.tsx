@@ -19,8 +19,10 @@ export const Kitchen: React.FC = () => {
     Array(10).fill(null).map(() => ({ menuItemId: null, qty: 0, price: 15 }))
   );
 
-  // Published State
-  const [isPublished, setIsPublished] = useState(false);
+  // Derive Published State from menu data (persists across tab navigation)
+  const isPublished = menu.some(item => item.dailyLimit && item.dailyLimit > 0);
+  const [isEditingPublished, setIsEditingPublished] = useState(false);
+  const isLocked = isPublished && !isEditingPublished;
 
   // Add Menu Item Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -130,14 +132,14 @@ export const Kitchen: React.FC = () => {
           }
 
           publishDailyMenu(itemsToPublish);
-          setIsPublished(true);
+          setIsEditingPublished(false); // Lock UI after publish
           alert('Menu Published for Today!');
       }
   };
 
   const handleEditPublishedMenu = () => {
       if (window.confirm('Are you sure you want to edit today\'s published menu? This may affect current orders.')) {
-          setIsPublished(false);
+          setIsEditingPublished(true); // Unlock UI for editing
       }
   };
 
@@ -290,7 +292,7 @@ export const Kitchen: React.FC = () => {
               )}
 
               {/* Mode Toggle */}
-              <div className={`flex gap-2 bg-slate-100 p-1 rounded-lg ${isPublished ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className={`flex gap-2 bg-slate-100 p-1 rounded-lg ${isLocked ? 'opacity-50 pointer-events-none' : ''}`}>
                   <button
                       onClick={() => setPlanMode('full')}
                       className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
@@ -311,7 +313,7 @@ export const Kitchen: React.FC = () => {
 
               {/* Smart Recommendations */}
               {orders.length > 5 && (
-                  <Card className={`bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 ${isPublished ? 'opacity-50' : ''}`}>
+                  <Card className={`bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 ${isLocked ? 'opacity-50' : ''}`}>
                       <div className="flex items-start gap-3 mb-3">
                           <div className="bg-purple-100 p-2 rounded-lg">
                               <Lightbulb className="text-purple-600" size={20} />
@@ -360,7 +362,7 @@ export const Kitchen: React.FC = () => {
 
               {/* Full Menu Mode UI */}
               {planMode === 'full' && (
-                  <div className={isPublished ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className={isLocked ? 'opacity-50 pointer-events-none' : ''}>
                       <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl text-sm text-sky-800">
                           <p>Select items to cook today. Entering a quantity &gt; 0 makes it available in the Orders tab.</p>
                       </div>
@@ -409,7 +411,7 @@ export const Kitchen: React.FC = () => {
 
               {/* Slot Mode UI */}
               {planMode === 'slot' && (
-                  <div className={isPublished ? 'opacity-50 pointer-events-none' : ''}>
+                  <div className={isLocked ? 'opacity-50 pointer-events-none' : ''}>
                       <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-sm text-amber-800">
                           <p>📍 <strong>Slot Mode:</strong> Select menu items for each slot. Perfect for fixed menu rotations!</p>
                       </div>
@@ -501,8 +503,8 @@ export const Kitchen: React.FC = () => {
                   </div>
               )}
 
-              {/* Publish Button (both modes) - Only show when not published */}
-              {!isPublished && (
+              {/* Publish Button (both modes) - Only show when not locked */}
+              {!isLocked && (
                   <div className="sticky bottom-20 md:bottom-6 pt-4">
                       <Button size="lg" fullWidth className="shadow-xl py-4" onClick={handlePublish}>
                           <Save className="mr-2" size={20} /> Publish Today's Menu
