@@ -1,6 +1,6 @@
 
 export type PaymentStatus = 'paid' | 'unpaid' | 'partial';
-export type OrderStatus = 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
+export type OrderStatus = 'new' | 'reserved' | 'completed' | 'cancelled';
 export type Unit = 'portion' | 'kg' | 'pcs' | 'liter' | 'pack' | 'tray';
 export type PaymentBehavior = 'on_time' | 'late' | 'chronic_late' | 'never_paid' | 'new_customer';
 
