@@ -12,6 +12,13 @@ export const Kitchen: React.FC = () => {
   // Plan State
   const [prepValues, setPrepValues] = useState<Record<string, { qty: number, price: number }>>({});
 
+  // Plan Mode State (Full Menu vs Slot Mode)
+  const [planMode, setPlanMode] = useState<'full' | 'slot'>('full');
+  const [slotCount, setSlotCount] = useState(10); // Default 10 slots
+  const [slots, setSlots] = useState<Array<{ menuItemId: string | null, qty: number, price: number }>>(
+    Array(10).fill(null).map(() => ({ menuItemId: null, qty: 0, price: 15 }))
+  );
+
   // Add Menu Item Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newItemForm, setNewItemForm] = useState({
@@ -105,13 +112,54 @@ export const Kitchen: React.FC = () => {
 
   const handlePublish = () => {
       if (window.confirm('This will update "Today\'s Lunch Items" and reset stock counts. Continue?')) {
-          const itemsToPublish = Object.entries(prepValues)
-            .filter(([_, val]) => val.qty > 0)
-            .map(([id, val]) => ({ id, qty: val.qty, price: val.price }));
+          let itemsToPublish;
+
+          if (planMode === 'full') {
+              // Full Menu Mode
+              itemsToPublish = Object.entries(prepValues)
+                .filter(([_, val]) => val.qty > 0)
+                .map(([id, val]) => ({ id, qty: val.qty, price: val.price }));
+          } else {
+              // Slot Mode
+              itemsToPublish = slots
+                .filter(slot => slot.menuItemId && slot.qty > 0)
+                .map(slot => ({ id: slot.menuItemId!, qty: slot.qty, price: slot.price }));
+          }
 
           publishDailyMenu(itemsToPublish);
           alert('Menu Published for Today!');
       }
+  };
+
+  // Slot Mode Handlers
+  const handleSlotChange = (index: number, field: 'menuItemId' | 'qty' | 'price', value: string | number) => {
+    setSlots(prev => {
+      const updated = [...prev];
+      if (field === 'menuItemId') {
+        updated[index] = { ...updated[index], menuItemId: value as string };
+        // Auto-populate price from menu item
+        const item = menu.find(m => m.id === value);
+        if (item) {
+          updated[index].price = item.price;
+        }
+      } else if (field === 'qty' || field === 'price') {
+        updated[index] = { ...updated[index], [field]: Number(value) };
+      }
+      return updated;
+    });
+  };
+
+  const handleSlotCountChange = (newCount: number) => {
+    setSlotCount(newCount);
+    setSlots(prev => {
+      if (newCount > prev.length) {
+        // Add new slots
+        return [...prev, ...Array(newCount - prev.length).fill(null).map(() => ({ menuItemId: null, qty: 0, price: 15 }))];
+      } else {
+        // Remove excess slots
+        return prev.slice(0, newCount);
+      }
+    });
   };
 
   // Add Menu Item Handlers
@@ -209,6 +257,26 @@ export const Kitchen: React.FC = () => {
       {/* 1. PLAN TODAY */}
       {activeTab === 'plan' && (
           <div className="space-y-4 animate-in fade-in">
+              {/* Mode Toggle */}
+              <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                  <button
+                      onClick={() => setPlanMode('full')}
+                      className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
+                          planMode === 'full' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'
+                      }`}
+                  >
+                      📋 Full Menu Mode
+                  </button>
+                  <button
+                      onClick={() => setPlanMode('slot')}
+                      className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-all ${
+                          planMode === 'slot' ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'
+                      }`}
+                  >
+                      🎰 Slot Mode
+                  </button>
+              </div>
+
               {/* Smart Recommendations */}
               {orders.length > 5 && (
                   <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
@@ -258,11 +326,14 @@ export const Kitchen: React.FC = () => {
                   </Card>
               )}
 
-              <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl text-sm text-sky-800">
-                  <p>Select items to cook today. Entering a quantity &gt; 0 makes it available in the Orders tab.</p>
-              </div>
+              {/* Full Menu Mode UI */}
+              {planMode === 'full' && (
+                  <>
+                      <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl text-sm text-sky-800">
+                          <p>Select items to cook today. Entering a quantity &gt; 0 makes it available in the Orders tab.</p>
+                      </div>
 
-              <div className="space-y-3">
+                      <div className="space-y-3">
                   {menu.map(item => {
                       const val = prepValues[item.id] || { qty: item.dailyLimit || 0, price: item.price };
                       const isSelected = val.qty > 0;
@@ -300,8 +371,95 @@ export const Kitchen: React.FC = () => {
                         </Card>
                       );
                   })}
-              </div>
+                      </div>
+                  </>
+              )}
 
+              {/* Slot Mode UI */}
+              {planMode === 'slot' && (
+                  <>
+                      <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-sm text-amber-800">
+                          <p>📍 <strong>Slot Mode:</strong> Select menu items for each slot. Perfect for fixed menu rotations!</p>
+                      </div>
+
+                      {/* Slot Count Selector */}
+                      <Card className="bg-white">
+                          <label className="block text-sm font-bold text-slate-700 mb-2">Number of Slots</label>
+                          <select
+                              value={slotCount}
+                              onChange={(e) => handleSlotCountChange(Number(e.target.value))}
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                          >
+                              {[8, 9, 10, 11, 12, 13, 14, 15].map(num => (
+                                  <option key={num} value={num}>{num} Slots</option>
+                              ))}
+                          </select>
+                      </Card>
+
+                      {/* Slots Grid */}
+                      <div className="space-y-3">
+                          {slots.map((slot, index) => {
+                              const selectedItem = slot.menuItemId ? menu.find(m => m.id === slot.menuItemId) : null;
+
+                              return (
+                                  <Card key={index} className="transition-colors hover:border-sky-300">
+                                      <div className="flex items-center gap-3">
+                                          {/* Slot Number */}
+                                          <div className="flex-shrink-0 w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center font-bold text-sky-700">
+                                              {index + 1}
+                                          </div>
+
+                                          {/* Menu Item Dropdown */}
+                                          <div className="flex-1">
+                                              <select
+                                                  value={slot.menuItemId || ''}
+                                                  onChange={(e) => handleSlotChange(index, 'menuItemId', e.target.value)}
+                                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium"
+                                              >
+                                                  <option value="">-- Select Item --</option>
+                                                  {menu.map(item => (
+                                                      <option key={item.id} value={item.id}>
+                                                          {item.name} ({item.category})
+                                                      </option>
+                                                  ))}
+                                              </select>
+                                              {selectedItem && (
+                                                  <p className="text-xs text-slate-500 mt-1">{selectedItem.description || 'No description'}</p>
+                                              )}
+                                          </div>
+
+                                          {/* Quantity Input */}
+                                          <div className="w-20">
+                                              <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Qty</label>
+                                              <input
+                                                  type="number"
+                                                  value={slot.qty}
+                                                  onChange={(e) => handleSlotChange(index, 'qty', e.target.value)}
+                                                  className="w-full border border-slate-300 rounded-lg p-2 text-center font-bold text-sm"
+                                                  min="0"
+                                              />
+                                          </div>
+
+                                          {/* Price Input */}
+                                          <div className="w-20">
+                                              <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
+                                              <input
+                                                  type="number"
+                                                  value={slot.price}
+                                                  onChange={(e) => handleSlotChange(index, 'price', e.target.value)}
+                                                  className="w-full border border-slate-300 rounded-lg p-2 text-center text-sm"
+                                                  min="1"
+                                              />
+                                          </div>
+                                      </div>
+                                  </Card>
+                              );
+                          })}
+                      </div>
+                  </>
+              )}
+
+              {/* Publish Button (both modes) */}
               <div className="sticky bottom-20 md:bottom-6 pt-4">
                   <Button size="lg" fullWidth className="shadow-xl py-4" onClick={handlePublish}>
                       <Save className="mr-2" size={20} /> Publish Today's Menu
