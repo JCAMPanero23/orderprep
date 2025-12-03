@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Input, Badge } from '../components/UI';
 import { ChefHat, ShoppingBasket, BookOpen, Save, Plus, TrendingUp, TrendingDown, Lightbulb } from 'lucide-react';
@@ -53,13 +53,17 @@ export const Kitchen: React.FC = () => {
   };
 
   const handlePrepChange = (id: string, field: 'qty' | 'price', value: string) => {
-    setPrepValues(prev => ({
-        ...prev,
-        [id]: {
-            ...prev[id],
-            [field]: Number(value)
-        }
-    }));
+    // Bug Fix #1: Handle text input properly (allow empty string during editing)
+    // Only update if value is empty or a valid number
+    if (value === '' || !isNaN(Number(value))) {
+      setPrepValues(prev => ({
+          ...prev,
+          [id]: {
+              ...prev[id],
+              [field]: value === '' ? 0 : Number(value)
+          }
+      }));
+    }
   };
 
   const initPrep = (item: MenuItem) => {
@@ -70,6 +74,25 @@ export const Kitchen: React.FC = () => {
         }));
       }
   };
+
+  // Bug Fix #2: Initialize prepValues for all menu items when Plan tab is active
+  // This ensures prices are saved even if user doesn't touch the input
+  useEffect(() => {
+    if (activeTab === 'plan' && menu.length > 0) {
+      const initialValues: Record<string, { qty: number, price: number }> = {};
+      menu.forEach(item => {
+        if (!prepValues[item.id]) {
+          initialValues[item.id] = {
+            qty: item.dailyLimit || 10,
+            price: item.price
+          };
+        }
+      });
+      if (Object.keys(initialValues).length > 0) {
+        setPrepValues(prev => ({ ...prev, ...initialValues }));
+      }
+    }
+  }, [activeTab, menu]);
 
   const handlePublish = () => {
       if (window.confirm('This will update "Today\'s Lunch Items" and reset stock counts. Continue?')) {
@@ -182,8 +205,9 @@ export const Kitchen: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <div className="w-20">
                                         <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Qty</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
                                             className="w-full border rounded p-1 text-center font-bold"
                                             value={val.qty}
                                             onChange={(e) => handlePrepChange(item.id, 'qty', e.target.value)}
@@ -191,8 +215,9 @@ export const Kitchen: React.FC = () => {
                                     </div>
                                     <div className="w-20">
                                         <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
-                                        <input 
-                                            type="number" 
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
                                             className="w-full border rounded p-1 text-center"
                                             value={val.price}
                                             onChange={(e) => handlePrepChange(item.id, 'price', e.target.value)}
