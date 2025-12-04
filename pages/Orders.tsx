@@ -604,9 +604,8 @@ export const Orders: React.FC = () => {
 
             <div className="grid grid-cols-3 gap-2">
                 <Button
-                    variant="secondary"
                     fullWidth
-                    className="py-3 flex flex-col items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="py-3 flex flex-col items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed focus:ring-amber-500"
                     disabled={cart.length === 0 || !(selectedCustomer || (customerName.trim() && customerPhone.trim()))}
                     onClick={() => {
                       if (!selectedCustomer && !(customerName.trim() && customerPhone.trim())) {
@@ -621,9 +620,8 @@ export const Orders: React.FC = () => {
                     <span className="text-xs font-bold">Reserve</span>
                 </Button>
                 <Button
-                    variant="secondary"
                     fullWidth
-                    className="py-3 flex flex-col items-center justify-center gap-1 bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="py-3 flex flex-col items-center justify-center gap-1 bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed focus:ring-sky-500"
                     disabled={cart.length === 0 || !(selectedCustomer || (customerName.trim() && customerPhone.trim()))}
                     onClick={() => {
                       if (!selectedCustomer && !(customerName.trim() && customerPhone.trim())) {
@@ -707,9 +705,8 @@ export const Orders: React.FC = () => {
               </Button>
 
               <Button
-                variant="secondary"
                 fullWidth
-                className="py-4 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                className="py-4 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500"
                 onClick={() => handleHandOverPayLater(handOverModalOrder)}
               >
                 <ClockIcon size={20} />

@@ -288,12 +288,12 @@ export const Payments: React.FC = () => {
         <div className="space-y-3">
             <p className="text-sm text-slate-600 mb-4">Choose a message template for <b>{selectedOrder?.customerName}</b>:</p>
             
-            <button onClick={() => sendWhatsApp(`Hi ${selectedOrder?.customerName}! 👋 Hope you enjoyed the food. Just a gentle reminder regarding the ${selectedOrder?.totalAmount} AED payment. Thanks!`)} className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all group">
+            <button onClick={() => sendWhatsApp(`Hi ${selectedOrder?.customerName}! Hope you enjoyed the food. Just a gentle reminder regarding the ${selectedOrder?.totalAmount} AED payment. Thanks!`)} className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all group">
                 <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-slate-800 text-sm">👋 Friendly Reminder</span>
                     <Copy size={14} className="text-slate-400 group-hover:text-sky-500" />
                 </div>
-                <p className="text-xs text-slate-500">Hi {selectedOrder?.customerName}! 👋 Hope you enjoyed...</p>
+                <p className="text-xs text-slate-500">Hi {selectedOrder?.customerName}! Hope you enjoyed...</p>
             </button>
              <button onClick={() => sendWhatsApp(`Hello ${selectedOrder?.customerName}. This is a reminder for your outstanding balance of ${selectedOrder?.totalAmount} AED. Please settle at your earliest convenience. Thank you.`)} className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all group">
                 <div className="flex justify-between items-center mb-1">
@@ -421,12 +421,22 @@ export const Payments: React.FC = () => {
                 onChange={e => setConvertForm(prev => ({...prev, floor: e.target.value}))}
                 placeholder="5"
               />
-              <Input
-                label="Building"
-                value={convertForm.building}
-                onChange={e => setConvertForm(prev => ({...prev, building: e.target.value}))}
-                placeholder="A"
-              />
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Building</label>
+                <input
+                  type="text"
+                  value={convertForm.building}
+                  onChange={e => setConvertForm(prev => ({...prev, building: e.target.value}))}
+                  placeholder="A"
+                  list="convert-building-suggestions"
+                  className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-sm"
+                />
+                <datalist id="convert-building-suggestions">
+                  {Array.from(new Set(customers.map(c => c.building).filter(b => b && b.trim() !== ''))).map((building, idx) => (
+                    <option key={idx} value={building} />
+                  ))}
+                </datalist>
+              </div>
             </div>
             <Input
               label="Location (Optional)"

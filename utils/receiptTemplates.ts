@@ -5,18 +5,18 @@ export const RECEIPT_TEMPLATES: ReceiptTemplate[] = [
   {
     id: 'casual-friendly',
     name: 'Casual Friendly',
-    content: `Hi {customerName}! 👋
+    content: `Hi {customerName}!
 
-Thanks for your order today! 🙏
+Thanks for your order today!
 
-📦 Your Order:
+Your Order:
 {items}
 
-💰 Total: {total} AED
-✅ {paymentStatus}
+Total: {total} AED
+{paymentStatus}
 
-Enjoy your meal! 😋
-See you tomorrow! 👋`,
+Enjoy your meal!
+See you tomorrow!`,
     isDefault: true
   },
   {
@@ -24,14 +24,14 @@ See you tomorrow! 👋`,
     name: 'Professional Friendly',
     content: `Hi {customerName},
 
-Thank you for your order! ✅
+Thank you for your order!
 
-📋 Order Details:
+Order Details:
 {items}
 
-💰 Total {paymentStatus}: {total} AED
+Total {paymentStatus}: {total} AED
 
-We appreciate your business! 🙏
+We appreciate your business!
 Have a great day!
 
 - OrderPrep`,
@@ -40,13 +40,13 @@ Have a great day!
   {
     id: 'minimal',
     name: 'Minimal',
-    content: `✅ Order Confirmed - {customerName}
+    content: `Order Confirmed - {customerName}
 
 {items}
 
 Total: {total} AED ({paymentStatus})
 
-Thanks! 😊`,
+Thanks!`,
     isDefault: false
   }
 ];
@@ -87,15 +87,15 @@ export const generateSoldOutMessage = (
   const itemNames = soldOutItems.join(', ');
 
   let message = `Hi ${customer},\n\n`;
-  message += `We're sorry, but ${itemNames} ${soldOutItems.length > 1 ? 'are' : 'is'} sold out today. 😔\n\n`;
+  message += `We're sorry, but ${itemNames} ${soldOutItems.length > 1 ? 'are' : 'is'} sold out today.\n\n`;
   message += `Here's what we still have available:\n`;
-  message += `📋 Today's Menu:\n`;
+  message += `Today's Menu:\n`;
 
   availableMenu.forEach(item => {
-    message += `• ${item.name} (${item.stock} left) - ${item.price} AED\n`;
+    message += `- ${item.name} (${item.stock} left) - ${item.price} AED\n`;
   });
 
-  message += `\nWould you like to change your order? Reply with your choice! 🙏`;
+  message += `\nWould you like to change your order? Reply with your choice!`;
 
   return message;
 };
