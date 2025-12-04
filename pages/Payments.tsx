@@ -2,17 +2,20 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Modal } from '../components/UI';
-import { Check, MessageCircle, Clock, Search, Copy, Send } from 'lucide-react';
+import { Check, MessageCircle, Clock, Search, Copy, Send, Eye } from 'lucide-react';
 import { Order } from '../types';
 
 export const Payments: React.FC = () => {
   const { orders, markOrderPaid } = useAppStore();
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid' | 'all'>('unpaid');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Reminder Modal State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showReminderModal, setShowReminderModal] = useState(false);
+
+  // Preview Order Modal State
+  const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
   const filteredOrders = orders
     .filter(o => {
@@ -130,21 +133,28 @@ export const Payments: React.FC = () => {
                         <div className="flex gap-2 mt-4">
                             {order.paymentStatus !== 'paid' ? (
                                 <>
-                                    <Button 
-                                        variant="primary" 
-                                        size="sm" 
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
                                         className="flex-1 bg-green-600 hover:bg-green-700"
                                         onClick={() => handleMarkPaid(order)}
                                     >
                                         Mark Paid
                                     </Button>
-                                    <Button 
-                                        variant="secondary" 
-                                        size="sm" 
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
                                         className="flex-1"
                                         onClick={() => handleRemind(order)}
                                     >
                                         <MessageCircle size={16} className="mr-1" /> Remind
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPreviewOrder(order)}
+                                    >
+                                        <Eye size={16} />
                                     </Button>
                                 </>
                             ) : (
@@ -157,6 +167,13 @@ export const Payments: React.FC = () => {
                                         window.open(`https://wa.me/${order.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
                                     }}>
                                         <Send size={14} /> Receipt
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setPreviewOrder(order)}
+                                    >
+                                        <Eye size={16} />
                                     </Button>
                                 </div>
                             )}
@@ -199,6 +216,76 @@ export const Payments: React.FC = () => {
             </button>
         </div>
       </Modal>
+
+      {/* Preview Order Details Modal */}
+      {previewOrder && (
+        <Modal
+          isOpen={true}
+          onClose={() => setPreviewOrder(null)}
+          title="Order Details"
+        >
+          <div className="space-y-4">
+            <div className="bg-slate-50 p-4 rounded-lg">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-slate-500 font-medium">Customer</p>
+                  <p className="font-bold text-slate-900">{previewOrder.customerName}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 font-medium">Phone</p>
+                  <p className="font-bold text-slate-900">{previewOrder.customerPhone}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 font-medium">Order Date</p>
+                  <p className="font-bold text-slate-900">{new Date(previewOrder.deliveryDate).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 font-medium">Order ID</p>
+                  <p className="font-bold text-slate-900 text-xs">#{previewOrder.id.substring(0, 8)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm text-slate-600 font-medium mb-2">Items Ordered:</p>
+              <div className="space-y-2">
+                {previewOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200">
+                    <div>
+                      <p className="font-bold text-slate-900">{item.name}</p>
+                      <p className="text-xs text-slate-500">Qty: {item.quantity} × {item.priceAtOrder} AED</p>
+                    </div>
+                    <p className="font-bold text-slate-900">{item.quantity * item.priceAtOrder} AED</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-100 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <p className="font-bold text-slate-700">Total Amount</p>
+                <p className="text-2xl font-bold text-slate-900">{previewOrder.totalAmount} AED</p>
+              </div>
+              <div className="mt-2 pt-2 border-t border-slate-300">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-slate-600">Payment Status</p>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    previewOrder.paymentStatus === 'paid'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {previewOrder.paymentStatus === 'paid' ? '✓ PAID' : '⏳ UNPAID'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Button variant="ghost" fullWidth onClick={() => setPreviewOrder(null)}>
+              Close
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

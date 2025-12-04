@@ -43,7 +43,9 @@ export interface Customer {
   name: string;
   phone: string;
   unitNumber?: string;
-  location?: string; // Building Name
+  floor?: string; // Floor number (e.g., "5", "12")
+  building?: string; // Building name (e.g., "A", "Tower A")
+  location?: string; // Other location info (Reception, Lobby, etc.)
   notes?: string;
   totalOrders: number;
   totalSpent: number;
@@ -84,6 +86,13 @@ export interface Order {
   discountAmount?: number; // Flash sale discount
   isFlashSale?: boolean; // Was this a flash sale order?
   paymentMethod?: 'cash' | 'transfer' | 'credit';
+  // Order workflow tracking
+  isWalkIn?: boolean; // Walk-in customer (skip reservation)
+  reservedAt?: string; // When order was reserved
+  handedOverAt?: string; // When food was handed to customer
+  cancelledAt?: string; // When order was cancelled
+  cancelReason?: string; // Reason for cancellation
+  cancelledItems?: string[]; // IDs of cancelled items (for sold-out)
 }
 
 export interface ShoppingListItem {
@@ -94,4 +103,23 @@ export interface ShoppingListItem {
   toBuy: number;
   unit: Unit;
   category?: string;
+}
+
+// Sorting options for Reserved Orders
+export type SortOption =
+  | 'floor-asc'
+  | 'floor-desc'
+  | 'building-asc'
+  | 'building-desc'
+  | 'unit-asc'
+  | 'unit-desc'
+  | 'time-asc'
+  | 'time-desc';
+
+// Receipt template for WhatsApp messages
+export interface ReceiptTemplate {
+  id: string;
+  name: string;
+  content: string; // Template with {variables}
+  isDefault: boolean;
 }

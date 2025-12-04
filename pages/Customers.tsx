@@ -15,6 +15,8 @@ export const Customers: React.FC = () => {
     name: '',
     phone: '',
     unitNumber: '',
+    floor: '',
+    building: '',
     location: ''
   });
 
@@ -47,10 +49,11 @@ export const Customers: React.FC = () => {
         name: newCustomerForm.name.trim(),
         phone: newCustomerForm.phone.trim(),
         unitNumber: newCustomerForm.unitNumber.trim(),
+        floor: newCustomerForm.floor.trim(),
+        building: newCustomerForm.building.trim(),
         location: newCustomerForm.location.trim(),
         totalSpent: 0,
-        totalOrders: 0,
-        lastOrderDate: new Date().toISOString()
+        totalOrders: 0
     };
 
     // Add to store
@@ -58,7 +61,7 @@ export const Customers: React.FC = () => {
 
     // Close modal and reset form
     setAddCustomerModalOpen(false);
-    setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+    setNewCustomerForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
 
     // Success feedback
     alert(`Customer "${newCustomer.name}" added successfully!`);
@@ -163,19 +166,32 @@ export const Customers: React.FC = () => {
                 value={editForm.phone || ''}
                 onChange={e => setEditForm(prev => ({...prev, phone: e.target.value}))}
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
                 <Input
-                    label="Unit Number"
+                    label="Unit #"
                     value={editForm.unitNumber || ''}
                     onChange={e => setEditForm(prev => ({...prev, unitNumber: e.target.value}))}
-                    placeholder="e.g. 501"
+                    placeholder="501"
                 />
                 <Input
-                    label="Building/Location"
-                    value={editForm.location || ''}
-                    onChange={e => setEditForm(prev => ({...prev, location: e.target.value}))}
+                    label="Floor"
+                    value={editForm.floor || ''}
+                    onChange={e => setEditForm(prev => ({...prev, floor: e.target.value}))}
+                    placeholder="5"
+                />
+                <Input
+                    label="Building"
+                    value={editForm.building || ''}
+                    onChange={e => setEditForm(prev => ({...prev, building: e.target.value}))}
+                    placeholder="A"
                 />
             </div>
+            <Input
+                label="Location (Optional)"
+                value={editForm.location || ''}
+                onChange={e => setEditForm(prev => ({...prev, location: e.target.value}))}
+                placeholder="Reception, Lobby, etc."
+            />
             <div className="flex gap-2 pt-2">
                 <Button variant="ghost" fullWidth onClick={() => setEditingId(null)}>Cancel</Button>
                 <Button fullWidth onClick={saveEdit}>Save Changes</Button>
@@ -188,7 +204,7 @@ export const Customers: React.FC = () => {
         isOpen={isAddCustomerModalOpen}
         onClose={() => {
           setAddCustomerModalOpen(false);
-          setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+          setNewCustomerForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
         }}
         title="Add New Customer"
       >
@@ -206,27 +222,39 @@ export const Customers: React.FC = () => {
             placeholder="05XXXXXXXX"
             type="tel"
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <Input
-              label="Unit Number"
+              label="Unit #"
               value={newCustomerForm.unitNumber}
               onChange={e => setNewCustomerForm(prev => ({...prev, unitNumber: e.target.value}))}
-              placeholder="e.g. 501"
+              placeholder="501"
             />
             <Input
-              label="Building/Location"
-              value={newCustomerForm.location}
-              onChange={e => setNewCustomerForm(prev => ({...prev, location: e.target.value}))}
-              placeholder="Optional"
+              label="Floor"
+              value={newCustomerForm.floor}
+              onChange={e => setNewCustomerForm(prev => ({...prev, floor: e.target.value}))}
+              placeholder="5"
+            />
+            <Input
+              label="Building"
+              value={newCustomerForm.building}
+              onChange={e => setNewCustomerForm(prev => ({...prev, building: e.target.value}))}
+              placeholder="A"
             />
           </div>
+          <Input
+            label="Location (Optional)"
+            value={newCustomerForm.location}
+            onChange={e => setNewCustomerForm(prev => ({...prev, location: e.target.value}))}
+            placeholder="Reception, Lobby, etc."
+          />
           <div className="flex gap-2 pt-2">
             <Button
               variant="ghost"
               fullWidth
               onClick={() => {
                 setAddCustomerModalOpen(false);
-                setNewCustomerForm({ name: '', phone: '', unitNumber: '', location: '' });
+                setNewCustomerForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
               }}
             >
               Cancel

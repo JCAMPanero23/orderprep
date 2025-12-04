@@ -7,12 +7,15 @@ interface AppState {
   menu: MenuItem[];
   customers: Customer[];
   inventory: Ingredient[];
-  
+
   // Actions
   addOrder: (order: Order) => void;
   updateOrder: (id: string, updates: Partial<Order>) => void;
   markOrderPaid: (id: string) => void;
-  
+  markOrderReserved: (id: string) => void;
+  markOrderHandedOver: (id: string) => void;
+  cancelOrderWithReason: (id: string, reason: string, itemIds?: string[]) => void;
+
   // Menu & Kitchen
   updateMenu: (id: string, updates: Partial<MenuItem>) => void;
   addMenuItem: (item: MenuItem) => void;
@@ -20,11 +23,11 @@ interface AppState {
   getRemainingStock: (itemId: string) => number;
   toggleMenuAvailability: (id: string) => void;
   resetDailyStock: () => void;
-  
+
   // Inventory
   updateInventory: (id: string, updates: Partial<Ingredient>) => void;
   addInventoryItem: (item: Ingredient) => void;
-  
+
   // Customers
   addCustomer: (customer: Customer) => void;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
@@ -45,8 +48,9 @@ const MOCK_MENU: MenuItem[] = [
 ];
 
 const MOCK_CUSTOMERS: Customer[] = [
-  { id: 'c1', name: 'Sarah', phone: '971501234567', unitNumber: '501', location: 'Control Tower', totalOrders: 12, totalSpent: 540 },
-  { id: 'c2', name: 'John', phone: '971559876543', unitNumber: 'Reception', location: 'Control Tower', totalOrders: 3, totalSpent: 135 },
+  { id: 'c1', name: 'Sarah', phone: '971501234567', unitNumber: '501', floor: '5', building: 'A', location: 'Control Tower', totalOrders: 12, totalSpent: 540 },
+  { id: 'c2', name: 'John', phone: '971559876543', unitNumber: '803', floor: '8', building: 'A', location: 'Control Tower', totalOrders: 3, totalSpent: 135 },
+  { id: 'c3', name: 'Emma', phone: '971501112222', unitNumber: '305', floor: '3', building: 'B', location: 'Office Tower', totalOrders: 8, totalSpent: 360 },
 ];
 
 const MOCK_INVENTORY: Ingredient[] = [
@@ -86,26 +90,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- Orders ---
   const addOrder = (order: Order) => {
     setOrders(prev => [order, ...prev]);
-    
+
     // Auto-update or create customer
     setCustomers(prev => {
-        const existing = prev.find(c => c.name.toLowerCase() === order.customerName.toLowerCase());
+        const existing = prev.find(c => c.id === order.customerId);
         if (existing) {
             return prev.map(c => c.id === existing.id ? {
-                ...c, 
+                ...c,
                 totalOrders: c.totalOrders + 1,
                 totalSpent: c.totalSpent + order.totalAmount,
                 // Update phone if provided and currently empty or N/A
-                phone: (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone : c.phone 
+                phone: (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone : c.phone
             } : c);
         } else {
             const newCustomer: Customer = {
-                id: Math.random().toString(36).substr(2, 9),
+                id: order.customerId, // BUG FIX: Use the order's customerId
                 name: order.customerName,
                 phone: order.customerPhone,
                 totalOrders: 1,
                 totalSpent: order.totalAmount,
-                location: 'Control Tower', // Default
+                location: '', // Will be updated later
                 unitNumber: '',
             };
             return [...prev, newCustomer];
@@ -118,7 +122,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const markOrderPaid = (id: string) => {
-    updateOrder(id, { paymentStatus: 'paid' });
+    updateOrder(id, {
+      paymentStatus: 'paid',
+      paymentDate: new Date().toISOString()
+    });
+  };
+
+  const markOrderReserved = (id: string) => {
+    updateOrder(id, {
+      status: 'reserved',
+      reservedAt: new Date().toISOString()
+    });
+  };
+
+  const markOrderHandedOver = (id: string) => {
+    updateOrder(id, {
+      status: 'completed',
+      handedOverAt: new Date().toISOString()
+    });
+  };
+
+  const cancelOrderWithReason = (id: string, reason: string, itemIds?: string[]) => {
+    updateOrder(id, {
+      status: 'cancelled',
+      cancelledAt: new Date().toISOString(),
+      cancelReason: reason,
+      cancelledItems: itemIds
+    });
   };
 
   // --- Menu & Kitchen ---
@@ -190,7 +220,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   return (
     <AppContext.Provider value={{
       orders, menu, customers, inventory,
-      addOrder, updateOrder, markOrderPaid,
+      addOrder, updateOrder, markOrderPaid, markOrderReserved, markOrderHandedOver, cancelOrderWithReason,
       updateMenu, addMenuItem, publishDailyMenu, getRemainingStock, toggleMenuAvailability, resetDailyStock,
       updateInventory, addInventoryItem,
       addCustomer, updateCustomer
