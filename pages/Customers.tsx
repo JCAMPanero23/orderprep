@@ -4,6 +4,7 @@ import { useAppStore } from '../store';
 import { Card, Button, Input, Modal } from '../components/UI';
 import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban } from 'lucide-react';
 import { Customer } from '../types';
+import { confirmNonUAEPhone } from '../utils/phoneValidation';
 
 export const Customers: React.FC = () => {
   const { customers, updateCustomer, addCustomer, orders } = useAppStore();
@@ -41,6 +42,11 @@ export const Customers: React.FC = () => {
     if (!newCustomerForm.phone.trim()) {
         alert("Please enter phone number");
         return;
+    }
+
+    // Validate UAE phone number
+    if (!confirmNonUAEPhone(newCustomerForm.phone.trim())) {
+        return; // User cancelled, don't proceed
     }
 
     // Create new customer object

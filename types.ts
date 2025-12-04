@@ -93,6 +93,10 @@ export interface Order {
   cancelledAt?: string; // When order was cancelled
   cancelReason?: string; // Reason for cancellation
   cancelledItems?: string[]; // IDs of cancelled items (for sold-out)
+  // Initial customer location data (used when creating new customer)
+  customerUnit?: string;
+  customerBuilding?: string;
+  customerFloor?: string;
 }
 
 export interface ShoppingListItem {

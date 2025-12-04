@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Card, Button, Modal } from '../components/UI';
-import { Check, MessageCircle, Clock, Search, Copy, Send, Eye } from 'lucide-react';
-import { Order } from '../types';
+import { Card, Button, Modal, Input } from '../components/UI';
+import { Check, MessageCircle, Clock, Search, Copy, Send, Eye, UserPlus } from 'lucide-react';
+import { Order, Customer } from '../types';
+import { confirmNonUAEPhone } from '../utils/phoneValidation';
 
 export const Payments: React.FC = () => {
-  const { orders, markOrderPaid } = useAppStore();
+  const { orders, markOrderPaid, addCustomer, updateOrder } = useAppStore();
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid' | 'all'>('unpaid');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -16,6 +17,17 @@ export const Payments: React.FC = () => {
 
   // Preview Order Modal State
   const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
+
+  // Convert to Customer Modal State
+  const [convertOrder, setConvertOrder] = useState<Order | null>(null);
+  const [convertForm, setConvertForm] = useState({
+    name: '',
+    phone: '',
+    unitNumber: '',
+    floor: '',
+    building: '',
+    location: ''
+  });
 
   const filteredOrders = orders
     .filter(o => {
@@ -49,6 +61,69 @@ export const Payments: React.FC = () => {
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/${selectedOrder.customerPhone}?text=${encoded}`, '_blank');
     setShowReminderModal(false);
+  };
+
+  const handleConvertToCustomer = (order: Order) => {
+    // Pre-fill form with order data
+    setConvertForm({
+      name: order.customerName,
+      phone: order.customerPhone,
+      unitNumber: order.customerUnit || '',
+      floor: order.customerFloor || '',
+      building: order.customerBuilding || '',
+      location: ''
+    });
+    setConvertOrder(order);
+  };
+
+  const handleSaveCustomer = () => {
+    if (!convertOrder) return;
+
+    // Validation
+    if (!convertForm.name.trim()) {
+      alert('Please enter customer name');
+      return;
+    }
+    if (!convertForm.phone.trim()) {
+      alert('Please enter phone number');
+      return;
+    }
+
+    // Validate UAE phone number
+    if (!confirmNonUAEPhone(convertForm.phone.trim())) {
+      return; // User cancelled, don't proceed
+    }
+
+    // Create new customer
+    const newCustomer: Customer = {
+      id: `cust_${Date.now()}`,
+      name: convertForm.name.trim(),
+      phone: convertForm.phone.trim(),
+      unitNumber: convertForm.unitNumber.trim(),
+      floor: convertForm.floor.trim(),
+      building: convertForm.building.trim(),
+      location: convertForm.location.trim(),
+      totalSpent: convertOrder.totalAmount,
+      totalOrders: 1
+    };
+
+    addCustomer(newCustomer);
+
+    // Update order to link to new customer and remove walk-in flag
+    updateOrder(convertOrder.id, {
+      customerId: newCustomer.id,
+      customerName: newCustomer.name,
+      customerPhone: newCustomer.phone,
+      isWalkIn: false,
+      customerUnit: newCustomer.unitNumber,
+      customerBuilding: newCustomer.building,
+      customerFloor: newCustomer.floor
+    });
+
+    // Close modal and reset
+    setConvertOrder(null);
+    setConvertForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
+    alert(`Customer "${newCustomer.name}" created successfully!`);
   };
 
   return (
@@ -117,7 +192,14 @@ export const Payments: React.FC = () => {
                         )}
                         <div className="flex justify-between items-start mb-2">
                             <div>
-                                <h3 className="font-bold text-slate-900 text-lg">{order.customerName}</h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-slate-900 text-lg">{order.customerName}</h3>
+                                    {order.isWalkIn && (
+                                        <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                            WALK-IN
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-xs text-slate-500">{new Date(order.deliveryDate).toDateString()}</p>
                             </div>
                             <div className="text-right">
@@ -158,23 +240,36 @@ export const Payments: React.FC = () => {
                                     </Button>
                                 </>
                             ) : (
-                                <div className="w-full flex gap-2">
-                                    <div className="flex-1 bg-green-50 text-green-700 text-center py-1.5 rounded-lg text-sm font-medium border border-green-100 flex items-center justify-center gap-1">
-                                        <Check size={14} /> Paid
+                                <div className="w-full space-y-2">
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 bg-green-50 text-green-700 text-center py-1.5 rounded-lg text-sm font-medium border border-green-100 flex items-center justify-center gap-1">
+                                            <Check size={14} /> Paid
+                                        </div>
+                                        <Button size="sm" variant="outline" className="border-green-200 text-green-700 bg-green-50" onClick={() => {
+                                            const msg = `Hi ${order.customerName}! Payment of ${order.totalAmount} AED received with thanks! ✅`;
+                                            window.open(`https://wa.me/${order.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+                                        }}>
+                                            <Send size={14} /> Receipt
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPreviewOrder(order)}
+                                        >
+                                            <Eye size={16} />
+                                        </Button>
                                     </div>
-                                    <Button size="sm" variant="outline" className="border-green-200 text-green-700 bg-green-50" onClick={() => {
-                                        const msg = `Hi ${order.customerName}! Payment of ${order.totalAmount} AED received with thanks! ✅`;
-                                        window.open(`https://wa.me/${order.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-                                    }}>
-                                        <Send size={14} /> Receipt
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setPreviewOrder(order)}
-                                    >
-                                        <Eye size={16} />
-                                    </Button>
+                                    {order.isWalkIn && (
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            fullWidth
+                                            className="border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100"
+                                            onClick={() => handleConvertToCustomer(order)}
+                                        >
+                                            <UserPlus size={14} className="mr-1" /> Convert to Customer
+                                        </Button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -283,6 +378,77 @@ export const Payments: React.FC = () => {
             <Button variant="ghost" fullWidth onClick={() => setPreviewOrder(null)}>
               Close
             </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Convert to Customer Modal */}
+      {convertOrder && (
+        <Modal
+          isOpen={true}
+          onClose={() => {
+            setConvertOrder(null);
+            setConvertForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
+          }}
+          title="Convert Walk-in to Customer"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">Create a customer profile for this walk-in order.</p>
+
+            <Input
+              label="Name *"
+              value={convertForm.name}
+              onChange={e => setConvertForm(prev => ({...prev, name: e.target.value}))}
+              placeholder="Customer name"
+            />
+            <Input
+              label="Phone *"
+              value={convertForm.phone}
+              onChange={e => setConvertForm(prev => ({...prev, phone: e.target.value}))}
+              placeholder="05XXXXXXXX"
+              type="tel"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                label="Unit #"
+                value={convertForm.unitNumber}
+                onChange={e => setConvertForm(prev => ({...prev, unitNumber: e.target.value}))}
+                placeholder="501"
+              />
+              <Input
+                label="Floor"
+                value={convertForm.floor}
+                onChange={e => setConvertForm(prev => ({...prev, floor: e.target.value}))}
+                placeholder="5"
+              />
+              <Input
+                label="Building"
+                value={convertForm.building}
+                onChange={e => setConvertForm(prev => ({...prev, building: e.target.value}))}
+                placeholder="A"
+              />
+            </div>
+            <Input
+              label="Location (Optional)"
+              value={convertForm.location}
+              onChange={e => setConvertForm(prev => ({...prev, location: e.target.value}))}
+              placeholder="Reception, Lobby, etc."
+            />
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="ghost"
+                fullWidth
+                onClick={() => {
+                  setConvertOrder(null);
+                  setConvertForm({ name: '', phone: '', unitNumber: '', floor: '', building: '', location: '' });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button fullWidth onClick={handleSaveCustomer}>
+                Create Customer
+              </Button>
+            </div>
           </div>
         </Modal>
       )}

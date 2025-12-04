@@ -31,6 +31,10 @@ interface AppState {
   // Customers
   addCustomer: (customer: Customer) => void;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
+
+  // System
+  resetDailyData: () => void; // Reset orders, menu daily limits, and customer order history
+  fullReset: () => void; // Reset ALL data (orders, menu, customers, inventory)
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -91,30 +95,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addOrder = (order: Order) => {
     setOrders(prev => [order, ...prev]);
 
-    // Auto-update or create customer
-    setCustomers(prev => {
-        const existing = prev.find(c => c.id === order.customerId);
-        if (existing) {
-            return prev.map(c => c.id === existing.id ? {
-                ...c,
-                totalOrders: c.totalOrders + 1,
-                totalSpent: c.totalSpent + order.totalAmount,
-                // Update phone if provided and currently empty or N/A
-                phone: (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone : c.phone
-            } : c);
-        } else {
-            const newCustomer: Customer = {
-                id: order.customerId, // BUG FIX: Use the order's customerId
-                name: order.customerName,
-                phone: order.customerPhone,
-                totalOrders: 1,
-                totalSpent: order.totalAmount,
-                location: '', // Will be updated later
-                unitNumber: '',
-            };
-            return [...prev, newCustomer];
-        }
-    });
+    // Auto-update or create customer (skip for walk-in customers)
+    if (!order.isWalkIn) {
+      setCustomers(prev => {
+          const existing = prev.find(c => c.id === order.customerId);
+          if (existing) {
+              return prev.map(c => c.id === existing.id ? {
+                  ...c,
+                  totalOrders: c.totalOrders + 1,
+                  totalSpent: c.totalSpent + order.totalAmount,
+                  // Update phone if provided and currently empty or N/A
+                  phone: (order.customerPhone && order.customerPhone !== 'N/A') ? order.customerPhone : c.phone
+              } : c);
+          } else {
+              const newCustomer: Customer = {
+                  id: order.customerId, // BUG FIX: Use the order's customerId
+                  name: order.customerName,
+                  phone: order.customerPhone,
+                  totalOrders: 1,
+                  totalSpent: order.totalAmount,
+                  unitNumber: order.customerUnit || '',
+                  building: order.customerBuilding || '',
+                  floor: order.customerFloor || '',
+                  location: '', // Can be updated later in Customers tab
+              };
+              return [...prev, newCustomer];
+          }
+      });
+    }
   };
 
   const updateOrder = (id: string, updates: Partial<Order>) => {
@@ -217,13 +225,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   };
 
+  // --- System ---
+  const resetDailyData = () => {
+    // Clear all orders
+    setOrders([]);
+
+    // Reset menu daily limits (keep menu items but clear dailyLimit)
+    setMenu(prev => prev.map(item => ({
+      ...item,
+      dailyLimit: undefined,
+      isAvailable: false
+    })));
+
+    // Reset customer order history (totalOrders and totalSpent)
+    setCustomers(prev => prev.map(customer => ({
+      ...customer,
+      totalOrders: 0,
+      totalSpent: 0
+    })));
+
+    // Inventory is preserved
+  };
+
+  const fullReset = () => {
+    // Reset ALL data to initial state
+    setOrders([]);
+    setMenu(MOCK_MENU);
+    setCustomers(MOCK_CUSTOMERS);
+    setInventory(MOCK_INVENTORY);
+  };
+
   return (
     <AppContext.Provider value={{
       orders, menu, customers, inventory,
       addOrder, updateOrder, markOrderPaid, markOrderReserved, markOrderHandedOver, cancelOrderWithReason,
       updateMenu, addMenuItem, publishDailyMenu, getRemainingStock, toggleMenuAvailability, resetDailyStock,
       updateInventory, addInventoryItem,
-      addCustomer, updateCustomer
+      addCustomer, updateCustomer,
+      resetDailyData, fullReset
     }}>
       {children}
     </AppContext.Provider>

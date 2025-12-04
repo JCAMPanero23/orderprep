@@ -5,13 +5,16 @@ import { Button, Modal } from '../components/UI';
 import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone, MapPin, CheckCircle, XCircle, ArrowUpDown, DollarSign, ClockIcon } from 'lucide-react';
 import { Order, MenuItem, Customer, SortOption } from '../types';
 import { generateWhatsAppReceipt } from '../utils/receiptTemplates';
+import { confirmNonUAEPhone } from '../utils/phoneValidation';
 
 export const Orders: React.FC = () => {
-  const { menu, customers, orders, addOrder, getRemainingStock, markOrderReserved, markOrderHandedOver, cancelOrderWithReason } = useAppStore();
+  const { menu, customers, orders, addOrder, updateOrder, getRemainingStock, markOrderReserved, markOrderHandedOver, cancelOrderWithReason, markOrderPaid } = useAppStore();
   
   // POS State
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [customerUnit, setCustomerUnit] = useState('');
+  const [customerBuilding, setCustomerBuilding] = useState('');
   const [cart, setCart] = useState<{item: MenuItem, qty: number}[]>([]);
   const [showCustomerResults, setShowCustomerResults] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -57,12 +60,22 @@ export const Orders: React.FC = () => {
   const selectCustomer = (customer: Customer) => {
     setCustomerName(customer.name);
     setCustomerPhone(customer.phone);
+    setCustomerUnit(customer.unitNumber || '');
+    setCustomerBuilding(customer.building || '');
     setSelectedCustomer(customer);
     setShowCustomerResults(false);
   };
 
-  const handleCheckout = (mode: 'reserve' | 'payCash') => {
+  const handleCheckout = (mode: 'reserve' | 'payCash' | 'payLater') => {
     if (cart.length === 0) return;
+
+    // Validate UAE phone number for non-walk-in customers
+    if (customerPhone && customerPhone !== 'N/A') {
+      if (!confirmNonUAEPhone(customerPhone)) {
+        return; // User cancelled, don't proceed
+      }
+    }
+
     const finalName = customerName.trim() || 'Walk-in Customer';
 
     const items = cart.map(c => ({
@@ -76,7 +89,9 @@ export const Orders: React.FC = () => {
     const discountAmount = isFlashSale ? flashSaleDiscount * cart.reduce((sum, c) => sum + c.qty, 0) : 0;
     const totalAmount = originalTotal - discountAmount;
 
-    const isWalkInOrder = !selectedCustomer || mode === 'payCash';
+    // Walk-in = ONLY name entered (no phone or phone is N/A)
+    // NOT walk-in = name + phone (with or without unit/building)
+    const isWalkInOrder = !customerPhone || customerPhone.trim() === '' || customerPhone === 'N/A';
 
     // BUG FIX: Find existing customer by name or use selectedCustomer ID
     let customerId = selectedCustomer?.id;
@@ -107,8 +122,10 @@ export const Orders: React.FC = () => {
         createdAt: new Date().toISOString(),
         isWalkIn: isWalkInOrder,
         reservedAt: mode === 'reserve' ? new Date().toISOString() : undefined,
-        handedOverAt: mode === 'payCash' ? new Date().toISOString() : undefined,
-        paymentDate: mode === 'payCash' ? new Date().toISOString() : undefined
+        handedOverAt: (mode === 'payCash' || mode === 'payLater') ? new Date().toISOString() : undefined,
+        paymentDate: mode === 'payCash' ? new Date().toISOString() : undefined,
+        customerUnit: customerUnit.trim() || undefined,
+        customerBuilding: customerBuilding.trim() || undefined
     };
 
     addOrder(newOrder);
@@ -117,6 +134,8 @@ export const Orders: React.FC = () => {
     setCart([]);
     setCustomerName('');
     setCustomerPhone('');
+    setCustomerUnit('');
+    setCustomerBuilding('');
     setSelectedCustomer(null);
     setIsFlashSale(false);
     setFlashSaleDiscount(5);
@@ -173,6 +192,9 @@ export const Orders: React.FC = () => {
   const filteredCustomers = customers.filter(c =>
     c.name.toLowerCase().includes(customerName.toLowerCase()) && customerName.length > 1
   );
+
+  // Get unique buildings for autocomplete
+  const uniqueBuildings = Array.from(new Set(customers.map(c => c.building).filter(b => b && b.trim() !== '')));
 
   // Sorting utility function
   const sortReservedOrders = (orders: Order[], sortOption: SortOption): Order[] => {
@@ -231,12 +253,18 @@ export const Orders: React.FC = () => {
     markOrderHandedOver(order.id);
     updateOrder(order.id, { paymentStatus: 'paid', paymentDate: new Date().toISOString() });
 
-    // Generate and copy receipt
+    // Generate receipt and send via WhatsApp
     const customer = customers.find(c => c.id === order.customerId);
     const receipt = generateWhatsAppReceipt(order, customer, 'casual-friendly');
-    navigator.clipboard.writeText(receipt);
 
-    alert(`✅ Order marked as PAID!\n📋 Receipt copied to clipboard - paste in WhatsApp!`);
+    // Direct WhatsApp link
+    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(receipt)}`, '_blank');
+    } else {
+      alert('No phone number available for this customer');
+    }
+
     setHandOverModalOrder(null);
   };
 
@@ -252,26 +280,21 @@ export const Orders: React.FC = () => {
 
     const message = `Hi ${order.customerName}! 👋\n\nThanks for your order today! 🙏\n\n📦 Your Order:\n${itemsList}\n\n💰 Total: ${order.totalAmount} AED\n⏳ Payment: Pending\n\nPlease send payment when convenient. Thank you! 😊`;
 
-    navigator.clipboard.writeText(message);
+    // Direct WhatsApp link
+    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
+    if (phone) {
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    } else {
+      alert('No phone number available for this customer');
+    }
 
-    alert(`✅ Order marked as HANDED OVER (Unpaid)\n📋 Thank you message copied - paste in WhatsApp!`);
     setHandOverModalOrder(null);
   };
 
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col md:h-auto overflow-y-auto pb-32">
-      {/* 1. Header & WhatsApp Paste */}
-      <div className="flex justify-between items-center mb-3">
-        <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
-        <Button
-            variant="outline"
-            size="sm"
-            className="text-green-600 border-green-200 bg-green-50 hover:bg-green-100"
-            onClick={() => setPasteModalOpen(true)}
-        >
-            <ClipboardPaste size={16} className="mr-1" /> Paste Order
-        </Button>
-      </div>
+      {/* 1. Header */}
+      <h1 className="text-2xl font-bold text-slate-900 mb-3">Orders</h1>
 
       {/* 2. Reserved Orders Section */}
       {reservedOrders.length > 0 && (
@@ -374,7 +397,19 @@ export const Orders: React.FC = () => {
       {/* Divider */}
       {reservedOrders.length > 0 && <div className="border-t-2 border-slate-200 my-4"></div>}
 
-      {/* 3. New Order Form Header */}
+      {/* 3. Paste Order Button */}
+      <div className="flex justify-end mb-3">
+        <Button
+            variant="outline"
+            size="sm"
+            className="text-green-600 border-green-200 bg-green-50 hover:bg-green-100"
+            onClick={() => setPasteModalOpen(true)}
+        >
+            <ClipboardPaste size={16} className="mr-1" /> Paste Order
+        </Button>
+      </div>
+
+      {/* 4. New Order Form Header */}
       <h2 className="text-lg font-bold text-slate-900 mb-3">➕ Create New Order</h2>
 
       {/* 2. Customer Section (Improved Contrast) */}
@@ -384,61 +419,84 @@ export const Orders: React.FC = () => {
             <h2 className="font-bold text-slate-900">Who is buying?</h2>
         </div>
         
-        <div className="flex gap-2">
-            <div className="relative flex-1">
-                <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => {
-                        setCustomerName(e.target.value);
-                        setShowCustomerResults(true);
-                        setSelectedCustomer(null); // Reset selection on edit
-                    }}
-                    placeholder="Name"
-                    className="w-full p-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 focus:ring-0 outline-none font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
-                />
-                
-                {/* Autocomplete Dropdown */}
-                {showCustomerResults && filteredCustomers.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 rounded-lg mt-1 max-h-40 overflow-y-auto z-50">
-                        {filteredCustomers.map(c => (
-                            <div 
-                                key={c.id} 
-                                onClick={() => selectCustomer(c)}
-                                className="p-3 hover:bg-sky-50 cursor-pointer border-b border-slate-100 last:border-0"
-                            >
-                                <p className="font-bold text-slate-900">{c.name}</p>
-                                <div className="flex items-center gap-2 text-xs text-slate-500">
-                                    {c.unitNumber && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-medium">Unit {c.unitNumber}</span>}
-                                    <span>{c.location}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-            
-            <div className="w-1/3">
-                 <div className="relative h-full">
-                    <Phone className="absolute left-3 top-3.5 text-slate-400" size={16} />
+        <div className="space-y-2">
+            {/* Name and Phone Row */}
+            <div className="flex gap-2">
+                <div className="relative flex-1">
                     <input
-                        type="tel"
-                        value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
-                        placeholder="Phone"
-                        className="w-full h-full pl-9 pr-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none font-medium text-slate-900 text-sm"
+                        type="text"
+                        value={customerName}
+                        onChange={(e) => {
+                            setCustomerName(e.target.value);
+                            setShowCustomerResults(true);
+                            setSelectedCustomer(null); // Reset selection on edit
+                        }}
+                        placeholder="Name"
+                        className="w-full p-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 focus:ring-0 outline-none font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
                     />
-                 </div>
+
+                    {/* Autocomplete Dropdown */}
+                    {showCustomerResults && filteredCustomers.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-slate-200 rounded-lg mt-1 max-h-40 overflow-y-auto z-50">
+                            {filteredCustomers.map(c => (
+                                <div
+                                    key={c.id}
+                                    onClick={() => selectCustomer(c)}
+                                    className="p-3 hover:bg-sky-50 cursor-pointer border-b border-slate-100 last:border-0"
+                                >
+                                    <p className="font-bold text-slate-900">{c.name}</p>
+                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                        {c.unitNumber && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 font-medium">Unit {c.unitNumber}</span>}
+                                        {c.building && <span>Bldg {c.building}</span>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="w-1/3">
+                     <div className="relative h-full">
+                        <Phone className="absolute left-3 top-3.5 text-slate-400" size={16} />
+                        <input
+                            type="tel"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                            placeholder="Phone"
+                            className="w-full h-full pl-9 pr-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none font-medium text-slate-900 text-sm"
+                        />
+                     </div>
+                </div>
+            </div>
+
+            {/* Unit and Building Row */}
+            <div className="flex gap-2">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        value={customerUnit}
+                        onChange={(e) => setCustomerUnit(e.target.value)}
+                        placeholder="Unit # (optional)"
+                        className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-sm"
+                    />
+                </div>
+                <div className="w-1/3">
+                    <input
+                        type="text"
+                        value={customerBuilding}
+                        onChange={(e) => setCustomerBuilding(e.target.value)}
+                        placeholder="Building"
+                        list="building-suggestions"
+                        className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-sm"
+                    />
+                    <datalist id="building-suggestions">
+                        {uniqueBuildings.map((building, idx) => (
+                            <option key={idx} value={building} />
+                        ))}
+                    </datalist>
+                </div>
             </div>
         </div>
-        
-        {/* Customer Unit Info Display */}
-        {selectedCustomer && selectedCustomer.unitNumber && (
-            <div className="mt-2 flex items-center gap-1 text-sky-700 bg-sky-50 px-2 py-1 rounded-md text-sm inline-flex">
-                <MapPin size={14} />
-                <span>Unit: <b>{selectedCustomer.unitNumber}</b> ({selectedCustomer.location})</span>
-            </div>
-        )}
       </div>
 
       {/* 3. Menu Grid */}
@@ -544,31 +602,50 @@ export const Orders: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
                 <Button
                     variant="secondary"
                     fullWidth
-                    className="py-3 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={cart.length === 0 || !selectedCustomer}
+                    className="py-3 flex flex-col items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={cart.length === 0 || !(selectedCustomer || (customerName.trim() && customerPhone.trim()))}
                     onClick={() => {
-                      if (!selectedCustomer) {
-                        alert('Please select a customer to reserve an order. Walk-in customers should use "Pay Cash" button.');
+                      if (!selectedCustomer && !(customerName.trim() && customerPhone.trim())) {
+                        alert('Please enter customer name and phone to reserve an order.');
                         return;
                       }
                       handleCheckout('reserve');
                     }}
-                    title={!selectedCustomer ? "Please select a customer to reserve" : ""}
+                    title={!(selectedCustomer || (customerName.trim() && customerPhone.trim())) ? "Enter customer name and phone to reserve" : ""}
                 >
-                    <Clock size={18} /> Reserve
+                    <Clock size={18} />
+                    <span className="text-xs font-bold">Reserve</span>
+                </Button>
+                <Button
+                    variant="secondary"
+                    fullWidth
+                    className="py-3 flex flex-col items-center justify-center gap-1 bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={cart.length === 0 || !(selectedCustomer || (customerName.trim() && customerPhone.trim()))}
+                    onClick={() => {
+                      if (!selectedCustomer && !(customerName.trim() && customerPhone.trim())) {
+                        alert('Please enter customer name and phone to hand over order.');
+                        return;
+                      }
+                      handleCheckout('payLater');
+                    }}
+                    title={!(selectedCustomer || (customerName.trim() && customerPhone.trim())) ? "Enter customer name and phone" : ""}
+                >
+                    <Clock size={18} />
+                    <span className="text-xs font-bold">Pay Later</span>
                 </Button>
                 <Button
                     variant="primary"
                     fullWidth
-                    className="py-3 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200"
+                    className="py-3 flex flex-col items-center justify-center gap-1 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200"
                     disabled={cart.length === 0}
                     onClick={() => handleCheckout('payCash')}
                 >
-                    <Banknote size={18} /> Pay Cash
+                    <Banknote size={18} />
+                    <span className="text-xs font-bold">Pay Cash</span>
                 </Button>
             </div>
         </div>
