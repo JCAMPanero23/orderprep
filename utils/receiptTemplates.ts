@@ -1,52 +1,54 @@
 import { Order, Customer, ReceiptTemplate } from '../types';
 
-// 3 Friendly Receipt Templates
+// 3 Enhanced Receipt Templates with WhatsApp formatting
 export const RECEIPT_TEMPLATES: ReceiptTemplate[] = [
   {
-    id: 'casual-friendly',
-    name: 'Casual Friendly',
-    content: `Hi {customerName}!
+    id: 'friendly',
+    name: 'Friendly',
+    content: `Hi {customerName}! 👋
 
-Thanks for your order today!
+Thanks for your order today! 🎉
 
-Your Order:
+*Your Order:*
 {items}
 
-Total: {total} AED
+*Total: {total} AED*
 {paymentStatus}
 
-Enjoy your meal!
+Enjoy your meal! 😊
 See you tomorrow!`,
     isDefault: true
   },
   {
-    id: 'professional-friendly',
-    name: 'Professional Friendly',
-    content: `Hi {customerName},
+    id: 'professional',
+    name: 'Professional',
+    content: `Dear {customerName},
 
-Thank you for your order!
+Thank you for your order.
 
-Order Details:
+*Order Details:*
 {items}
 
-Total {paymentStatus}: {total} AED
+*Total {paymentStatus}: {total} AED*
 
-We appreciate your business!
+We appreciate your business.
 Have a great day!
 
-- OrderPrep`,
+— OrderPrep`,
     isDefault: false
   },
   {
-    id: 'minimal',
-    name: 'Minimal',
-    content: `Order Confirmed - {customerName}
+    id: 'casual',
+    name: 'Casual',
+    content: `Hey {customerName}! 👋
+
+Order confirmed! 🔥
 
 {items}
 
-Total: {total} AED ({paymentStatus})
+*Total: {total} AED* {paymentStatus}
 
-Thanks!`,
+Thanks! 🙏`,
     isDefault: false
   }
 ];
@@ -55,7 +57,7 @@ Thanks!`,
 export const generateWhatsAppReceipt = (
   order: Order,
   customer?: Customer,
-  templateId: string = 'casual-friendly'
+  templateId: string = 'friendly'
 ): string => {
   const template = RECEIPT_TEMPLATES.find(t => t.id === templateId) || RECEIPT_TEMPLATES[0];
 

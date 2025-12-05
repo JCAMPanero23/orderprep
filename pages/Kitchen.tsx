@@ -44,7 +44,8 @@ export const Kitchen: React.FC = () => {
     name: '',
     description: '',
     category: 'Main' as 'Main' | 'Dessert' | 'Snack' | 'Beverage',
-    price: 15
+    price: 15,
+    tagsInput: '' // Store as string, convert to array when saving
   });
 
   // Edit Menu Item State
@@ -561,6 +562,9 @@ export const Kitchen: React.FC = () => {
       id: Math.random().toString(36).substr(2, 9),
       name: newItemForm.name.trim(),
       description: newItemForm.description.trim() || undefined,
+      tags: newItemForm.tagsInput.trim()
+        ? newItemForm.tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0)
+        : undefined,
       category: newItemForm.category,
       price: newItemForm.price,
       isAvailable: false,
@@ -574,7 +578,8 @@ export const Kitchen: React.FC = () => {
       name: '',
       description: '',
       category: 'Main',
-      price: 15
+      price: 15,
+      tagsInput: ''
     });
     setIsAddModalOpen(false);
     alert('Menu item added successfully!');
@@ -979,6 +984,15 @@ export const Kitchen: React.FC = () => {
                                       <div className="flex-1">
                                           <p className="font-bold text-slate-900">{item.name}</p>
                                           <p className="text-xs text-slate-500">{item.description || 'No description'}</p>
+                                          {item.tags && item.tags.length > 0 && (
+                                              <div className="flex flex-wrap gap-1 mt-1">
+                                                  {item.tags.map((tag, idx) => (
+                                                      <span key={idx} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                                                          {tag}
+                                                      </span>
+                                                  ))}
+                                              </div>
+                                          )}
                                       </div>
                                       <div className="flex items-center gap-2">
                                           <Badge variant="neutral">{item.category}</Badge>
@@ -1013,6 +1027,21 @@ export const Kitchen: React.FC = () => {
                                           onChange={(e) => setEditForm({ ...formData, description: e.target.value })}
                                           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
                                           rows={2}
+                                      />
+                                  </div>
+                                  <div>
+                                      <label className="block text-xs font-bold text-slate-700 mb-1">Tags (comma-separated)</label>
+                                      <input
+                                          type="text"
+                                          defaultValue={formData.tags?.join(', ') || ''}
+                                          onBlur={(e) => setEditForm({
+                                              ...formData,
+                                              tags: e.target.value.trim()
+                                                ? e.target.value.split(',').map(t => t.trim()).filter(t => t.length > 0)
+                                                : undefined
+                                          })}
+                                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                                          placeholder="ribs, pork, honey"
                                       />
                                   </div>
                                   <div className="grid grid-cols-2 gap-3">
@@ -1110,6 +1139,20 @@ export const Kitchen: React.FC = () => {
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
               rows={3}
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-1">Tags (comma-separated)</label>
+            <input
+              type="text"
+              value={newItemForm.tagsInput}
+              onChange={(e) => setNewItemForm({ ...newItemForm, tagsInput: e.target.value })}
+              placeholder="e.g., ribs, pork, honey, costillas, baboy"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Add alternative names and keywords to improve WhatsApp paste matching
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

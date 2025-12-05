@@ -2,9 +2,12 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Button, Modal } from '../components/UI';
-import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone } from 'lucide-react';
-import { Order, MenuItem, Customer } from '../types';
+import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
+import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone, Check } from 'lucide-react';
+import { Order, MenuItem, Customer, ParsedOrderResult } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
+import { parseWhatsAppOrder } from '../utils/whatsappParser';
+import { generateWhatsAppReceipt, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
 
 export const Orders: React.FC = () => {
   const { menu, customers, orders, addOrder, getRemainingStock, markOrderReserved } = useAppStore();
@@ -23,6 +26,17 @@ export const Orders: React.FC = () => {
   // WhatsApp Paste Modal
   const [isPasteModalOpen, setPasteModalOpen] = useState(false);
   const [pastedText, setPastedText] = useState('');
+  const [parsedResult, setParsedResult] = useState<ParsedOrderResult | null>(null);
+  const [isPasteReviewModalOpen, setPasteReviewModalOpen] = useState(false);
+
+  // WhatsApp Send Workflow
+  const [whatsappSendModalOpen, setWhatsappSendModalOpen] = useState(false);
+  const [orderConfirmationMessage, setOrderConfirmationMessage] = useState('');
+  const [pendingOrderAction, setPendingOrderAction] = useState<{
+    order: Order;
+    action: 'paid' | 'unpaid';
+  } | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('friendly');
 
   // Filter menu for available items
   const availableMenu = menu.filter(m => m.isAvailable && (m.dailyLimit || 0) > 0);
@@ -122,60 +136,150 @@ export const Orders: React.FC = () => {
 
     addOrder(newOrder);
 
-    // Reset POS
-    setCart([]);
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerUnit('');
-    setCustomerBuilding('');
-    setSelectedCustomer(null);
-    setIsFlashSale(false);
-    setFlashSaleDiscount(5);
+    // Generate WhatsApp confirmation message
+    const message = generateWhatsAppReceipt(newOrder, undefined, selectedTemplateId);
+    setOrderConfirmationMessage(message);
+    setPendingOrderAction({
+      order: newOrder,
+      action: mode === 'payCash' ? 'paid' : 'unpaid'
+    });
+    setWhatsappSendModalOpen(true);
+
+    // Don't clear cart yet - wait for WhatsApp confirmation
   };
 
-  const parseWhatsAppOrder = () => {
-    // 1. Try to find customer name
-    // Heuristic: Usually first line or after "Name:"
-    const lines = pastedText.split('\n').filter(l => l.trim().length > 0);
-    let foundName = '';
-    let foundPhone = '';
+  const handleParseWhatsAppOrder = () => {
+    const result = parseWhatsAppOrder(pastedText, availableMenu);
 
-    // 2. Try to match items
-    const matchedItems: {item: MenuItem, qty: number}[] = [];
-    
-    // Simple heuristic: Look for menu item names in the text
-    availableMenu.forEach(menuItem => {
-        // Create regex for item name (case insensitive)
-        const regex = new RegExp(menuItem.name.split(' ')[0], 'i'); // Match at least first word
-        if (regex.test(pastedText)) {
-             // Look for numbers near the item match? simpler: assume 1 unless digit found
-             const lineWithItem = lines.find(l => regex.test(l));
-             if (lineWithItem) {
-                 const numbers = lineWithItem.match(/\d+/);
-                 const qty = numbers ? parseInt(numbers[0]) : 1;
-                 matchedItems.push({item: menuItem, qty});
-             }
-        }
+    setParsedResult(result);
+    setPasteModalOpen(false);
+    setPasteReviewModalOpen(true);
+    setPastedText('');
+  };
+
+  const handleApplyParsedOrder = () => {
+    if (!parsedResult) return;
+
+    // Apply customer info
+    if (parsedResult.customerInfo.name) {
+      setCustomerName(parsedResult.customerInfo.name);
+    }
+    if (parsedResult.customerInfo.phone) {
+      setCustomerPhone(parsedResult.customerInfo.phone);
+    }
+    if (parsedResult.customerInfo.unitNumber) {
+      setCustomerUnit(parsedResult.customerInfo.unitNumber);
+    }
+    if (parsedResult.customerInfo.building) {
+      setCustomerBuilding(parsedResult.customerInfo.building);
+    }
+
+    // Add items to cart
+    parsedResult.items.forEach(item => {
+      if (item.selectedMatch) {
+        addToCart(item.selectedMatch.menuItem, item.quantity);
+      }
     });
 
-    if (matchedItems.length > 0) {
-        matchedItems.forEach(m => addToCart(m.item, m.qty));
+    setPasteReviewModalOpen(false);
+    setParsedResult(null);
+  };
+
+  // Handle sold-out item click - open WhatsApp to notify customer
+  const handleSoldOutClick = (soldOutItem: MenuItem) => {
+    if (!customerPhone.trim()) {
+      alert('Please enter customer phone number first to send WhatsApp notification');
+      return;
     }
 
-    // Try to extract name (assume first line if short)
-    if (lines.length > 0 && lines[0].length < 30) {
-        foundName = lines[0].replace(/name[:\s-]*/i, '').trim();
+    // Generate sold-out message
+    const availableItems = availableMenu
+      .filter(item => {
+        const stock = getRemainingStock(item.id);
+        const inCart = cart.find(c => c.item.id === item.id)?.qty || 0;
+        return (stock - inCart) > 0;
+      })
+      .map(item => ({
+        name: item.name,
+        category: item.category,
+        stock: getRemainingStock(item.id) - (cart.find(c => c.item.id === item.id)?.qty || 0),
+        price: item.price
+      }));
+
+    const message = generateSoldOutMessage(customerName || 'Customer', soldOutItem.name, availableItems);
+
+    // Open WhatsApp with message
+    const cleanPhone = customerPhone.replace(/\D/g, '');
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  // Generate sold-out message
+  const generateSoldOutMessage = (
+    customerName: string,
+    soldOutItemName: string,
+    availableItems: Array<{ name: string; category: string; stock: number; price: number }>
+  ): string => {
+    let message = `Hi ${customerName}! 👋\n\n`;
+    message += `We're sorry, but *${soldOutItemName}* is sold out today. 😔\n\n`;
+    message += `📋 *Here's what we still have available:*\n\n`;
+
+    const mains = availableItems.filter(i => i.category === 'Main');
+    const others = availableItems.filter(i => i.category !== 'Main');
+
+    if (mains.length > 0) {
+      message += `*Main Dishes (15 AED):*\n`;
+      mains.forEach(item => {
+        message += `• ${item.name} (${item.stock} left)\n`;
+      });
+      message += `\n`;
     }
-    
-    // Try to extract phone
-    const phoneMatch = pastedText.match(/(\+?971|05)\d+/);
-    if (phoneMatch) foundPhone = phoneMatch[0];
 
-    if (foundName) setCustomerName(foundName);
-    if (foundPhone) setCustomerPhone(foundPhone);
+    if (others.length > 0) {
+      message += `*Desserts & Snacks (10 AED):*\n`;
+      others.forEach(item => {
+        message += `• ${item.name} (${item.stock} left)\n`;
+      });
+    }
 
-    setPasteModalOpen(false);
-    setPastedText('');
+    message += `\nWould you like to change your order? Just reply with your choice! 🙏`;
+
+    return message;
+  };
+
+  // WhatsApp send confirmation callback
+  const handleWhatsAppSendConfirmed = () => {
+    if (pendingOrderAction) {
+      // Mark as paid if needed (already added to orders, just need to update payment status)
+      // Note: Order was already added in handleCheckout, payment status already set correctly
+
+      // Clear cart and form
+      setCart([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerUnit('');
+      setCustomerBuilding('');
+      setSelectedCustomer(null);
+      setIsFlashSale(false);
+      setFlashSaleDiscount(5);
+    }
+
+    setPendingOrderAction(null);
+  };
+
+  // Template change callback
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+
+    // Regenerate message with new template
+    if (pendingOrderAction) {
+      const message = generateWhatsAppReceipt(
+        pendingOrderAction.order,
+        undefined,
+        templateId
+      );
+      setOrderConfirmationMessage(message);
+    }
   };
 
   const totalCart = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
@@ -199,10 +303,11 @@ export const Orders: React.FC = () => {
         <Button
             variant="outline"
             size="sm"
-            className="text-green-600 border-green-200 bg-green-50 hover:bg-green-100"
-            onClick={() => setPasteModalOpen(true)}
+            className="text-slate-400 border-slate-200 bg-slate-50 cursor-not-allowed opacity-60"
+            disabled
+            title="WhatsApp Paste - Next Phase Development"
         >
-            <ClipboardPaste size={16} className="mr-1" /> Paste
+            <ClipboardPaste size={16} className="mr-1" /> Paste (Coming Soon)
         </Button>
       </div>
 
@@ -306,11 +411,10 @@ export const Orders: React.FC = () => {
                 return (
                     <button
                         key={item.id}
-                        onClick={() => !isSoldOut && addToCart(item)}
-                        disabled={isSoldOut}
+                        onClick={() => isSoldOut ? handleSoldOutClick(item) : addToCart(item)}
                         className={`relative p-2 rounded-lg border text-left transition-all active:scale-95 ${
                             isSoldOut
-                                ? 'bg-slate-100 border-slate-200 opacity-60'
+                                ? 'bg-red-50 border-red-200 hover:border-red-400 cursor-pointer'
                                 : 'bg-white border-slate-200 shadow-sm hover:border-sky-500'
                         }`}
                     >
@@ -323,7 +427,13 @@ export const Orders: React.FC = () => {
                             <span className="font-bold text-slate-900 text-lg">{item.price}</span>
                         </div>
                         <p className="font-bold text-slate-800 leading-tight line-clamp-2 h-10">{item.name}</p>
-                        
+
+                        {isSoldOut && (
+                            <p className="text-[10px] text-red-600 font-medium mt-1">
+                                Tap to notify customer
+                            </p>
+                        )}
+
                         {inCart > 0 && (
                             <div className="absolute -top-2 -right-2 bg-sky-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold shadow-md text-sm border-2 border-white">
                                 {inCart}
@@ -455,10 +565,184 @@ export const Orders: React.FC = () => {
             ></textarea>
             <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setPasteModalOpen(false)} fullWidth>Cancel</Button>
-                <Button onClick={parseWhatsAppOrder} fullWidth>Process Text</Button>
+                <Button onClick={handleParseWhatsAppOrder} fullWidth>Process Text</Button>
             </div>
         </div>
       </Modal>
+
+      {/* WhatsApp Paste Review Modal */}
+      <Modal
+        isOpen={isPasteReviewModalOpen}
+        onClose={() => setPasteReviewModalOpen(false)}
+        title="Review Parsed Order"
+      >
+        {parsedResult && (
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+            {/* Customer Info Section */}
+            <div className="bg-sky-50 border border-sky-200 rounded-lg p-3">
+              <h3 className="font-bold text-sky-900 text-sm mb-2">Customer Information</h3>
+              <div className="space-y-2">
+                {parsedResult.customerInfo.name && (
+                  <div>
+                    <label className="text-xs text-slate-600">Name</label>
+                    <input
+                      type="text"
+                      value={parsedResult.customerInfo.name}
+                      onChange={(e) => setParsedResult({
+                        ...parsedResult,
+                        customerInfo: { ...parsedResult.customerInfo, name: e.target.value }
+                      })}
+                      className="w-full border border-sky-300 rounded px-2 py-1 text-sm"
+                    />
+                  </div>
+                )}
+                {parsedResult.customerInfo.phone && (
+                  <div>
+                    <label className="text-xs text-slate-600">Phone</label>
+                    <input
+                      type="text"
+                      value={parsedResult.customerInfo.phone}
+                      onChange={(e) => setParsedResult({
+                        ...parsedResult,
+                        customerInfo: { ...parsedResult.customerInfo, phone: e.target.value }
+                      })}
+                      className="w-full border border-sky-300 rounded px-2 py-1 text-sm"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-2">
+                  {parsedResult.customerInfo.unitNumber && (
+                    <div>
+                      <label className="text-xs text-slate-600">Unit</label>
+                      <input
+                        type="text"
+                        value={parsedResult.customerInfo.unitNumber}
+                        onChange={(e) => setParsedResult({
+                          ...parsedResult,
+                          customerInfo: { ...parsedResult.customerInfo, unitNumber: e.target.value }
+                        })}
+                        className="w-full border border-sky-300 rounded px-2 py-1 text-sm"
+                      />
+                    </div>
+                  )}
+                  {parsedResult.customerInfo.building && (
+                    <div>
+                      <label className="text-xs text-slate-600">Building</label>
+                      <input
+                        type="text"
+                        value={parsedResult.customerInfo.building}
+                        onChange={(e) => setParsedResult({
+                          ...parsedResult,
+                          customerInfo: { ...parsedResult.customerInfo, building: e.target.value }
+                        })}
+                        className="w-full border border-sky-300 rounded px-2 py-1 text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Parsed Items Section */}
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm mb-2">
+                Detected Items ({parsedResult.items.length})
+              </h3>
+              <div className="space-y-3">
+                {parsedResult.items.map((item, index) => (
+                  <div key={index} className="border border-slate-200 rounded-lg p-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 mb-1">
+                          Original: <span className="italic">"{item.rawLine}"</span>
+                        </p>
+                        {item.confidence !== 'none' ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                                item.confidence === 'high' ? 'bg-green-100 text-green-700' :
+                                item.confidence === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {item.confidence === 'high' ? '✓ High' :
+                                 item.confidence === 'medium' ? '⚠ Medium' :
+                                 '⚠ Low'} Confidence
+                              </span>
+                            </div>
+                            {/* Match Selection Dropdown */}
+                            <select
+                              value={item.selectedMatch?.menuItem.id || ''}
+                              onChange={(e) => {
+                                const selected = item.matchResults.find(
+                                  m => m.menuItem.id === e.target.value
+                                );
+                                const newItems = [...parsedResult.items];
+                                newItems[index].selectedMatch = selected;
+                                setParsedResult({ ...parsedResult, items: newItems });
+                              }}
+                              className="w-full border border-slate-300 rounded px-2 py-1 text-sm font-medium"
+                            >
+                              {item.matchResults.map(match => (
+                                <option key={match.menuItem.id} value={match.menuItem.id}>
+                                  {match.menuItem.name} ({match.score}% match on {match.matchedOn})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded p-2">
+                            <p className="text-xs text-red-700 font-medium">
+                              ❌ No matches found. Skip this item or add manually.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {/* Quantity Input */}
+                      <div className="ml-3 w-16">
+                        <label className="text-[10px] text-slate-500 block mb-1">Qty</label>
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const newItems = [...parsedResult.items];
+                            newItems[index].quantity = parseInt(e.target.value) || 1;
+                            setParsedResult({ ...parsedResult, items: newItems });
+                          }}
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-center font-bold text-sm"
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2 border-t">
+              <Button variant="ghost" onClick={() => setPasteReviewModalOpen(false)} fullWidth>
+                Cancel
+              </Button>
+              <Button onClick={handleApplyParsedOrder} fullWidth>
+                <Check size={16} className="mr-1" /> Apply to Cart ({parsedResult.items.filter(i => i.selectedMatch).length} items)
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* WhatsApp Send Modal */}
+      <WhatsAppSendModal
+        isOpen={whatsappSendModalOpen}
+        onClose={() => setWhatsappSendModalOpen(false)}
+        message={orderConfirmationMessage}
+        customerPhone={customerPhone}
+        customerName={customerName || 'Customer'}
+        onConfirmSent={handleWhatsAppSendConfirmed}
+        onTemplateChange={handleTemplateChange}
+        availableTemplates={RECEIPT_TEMPLATES}
+        currentTemplateId={selectedTemplateId}
+      />
     </div>
   );
 };

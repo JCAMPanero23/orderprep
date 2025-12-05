@@ -26,6 +26,7 @@ export interface MenuItem {
   isAvailable: boolean; // Is it active in Master list?
   dailyLimit?: number; // How many cooked today
   description?: string;
+  tags?: string[]; // Searchable tags for fuzzy matching (aliases, keywords, Tagalog words)
   ingredients?: RecipeIngredient[];
   // Flash sale tracking
   flashSaleCount?: number; // Times this went to flash sale
@@ -126,4 +127,36 @@ export interface ReceiptTemplate {
   name: string;
   content: string; // Template with {variables}
   isDefault: boolean;
+}
+
+// Fuzzy matching interfaces for WhatsApp order parsing
+export interface FuzzyMatchResult {
+  menuItem: MenuItem;
+  confidence: 'high' | 'medium' | 'low';
+  matchedOn: 'name' | 'description' | 'tag';
+  matchedText: string;
+  score: number; // 0-100
+}
+
+export interface ParsedOrderResult {
+  items: ParsedOrderItem[];
+  customerInfo: ParsedCustomerInfo;
+  rawText: string;
+}
+
+export interface ParsedOrderItem {
+  quantity: number;
+  matchResults: FuzzyMatchResult[];
+  rawLine: string;
+  confidence: 'high' | 'medium' | 'low' | 'none';
+  selectedMatch?: FuzzyMatchResult;
+}
+
+export interface ParsedCustomerInfo {
+  name?: string;
+  phone?: string;
+  unitNumber?: string;
+  building?: string;
+  floor?: string;
+  confidence: 'high' | 'medium' | 'low';
 }
