@@ -1,0 +1,6 @@
+id,name,phone,unitNumber,floor,building,location,notes,totalOrders,totalSpent
+c1,Sarah,971501234567,501,5,A,Control Tower,VIP customer - always orders on weekends,12,540
+c2,John,971559876543,803,8,A,Control Tower,Prefers spicy food,3,135
+c3,Emma,971501112222,305,3,B,Office Tower,Vegetarian options only,8,360
+c4,Ahmad,971505551234,1204,12,A,Control Tower,Usually orders for team meetings,5,225
+c5,Lisa,971509998877,402,4,C,Residential Tower,Regular customer - Tuesday and Friday,15,675

@@ -1,0 +1,9 @@
+id,name,price,category,description,isAvailable
+1,Roast Pork w/ Mushroom Gravy,15,Main,Slow roasted pork in thin slices served with side of mushroom gravy and jasmine rice,true
+2,Honey Pork Ribs,15,Main,Slow cooked pork ribs and belly in honey soy sauce served on top of jasmine rice,true
+3,Fried Pork Belly (Sweet & Sour),15,Main,Fried pork belly bits with sweet & sour sauce and egg fried rice,true
+4,Chicken & Broccoli Stir Fry,15,Main,Asian style stir fry with chicken breast and broccoli with jasmine rice,true
+5,Spam Terriyaki,15,Main,SPAM slices with scrambled egg and terriyaki fried rice,true
+6,Siomai (10pcs),15,Main,Steamed dumplings served with soy sauce and chili garlic oil,true
+7,Milk Chocolate Brownies,10,Dessert,Fudgy chocolate brownies with milk chocolate chunks,true
+8,Peanuts (Normal/Spicy),10,Snack,Roasted peanuts available in normal or spicy flavor,true

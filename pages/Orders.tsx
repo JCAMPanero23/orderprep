@@ -189,33 +189,31 @@ export const Orders: React.FC = () => {
   const uniqueBuildings = Array.from(new Set(customers.map(c => c.building).filter(b => b && b.trim() !== '')));
 
   return (
-    <div className="h-[calc(100vh-140px)] flex flex-col md:h-auto overflow-y-auto pb-32">
+    <div className="pb-32">
       {/* 1. Header */}
-      <h1 className="text-xl font-bold text-slate-900 mb-2">Orders</h1>
+      <h1 className="text-xl font-bold text-slate-900 mb-1">Orders</h1>
 
-      {/* 2. Paste Order Button */}
-      <div className="flex justify-end mb-2">
+      {/* 2. New Order Form Header with Paste Button */}
+      <div className="flex justify-between items-center mb-1">
+        <h2 className="text-base font-bold text-slate-900">➕ Create New Order</h2>
         <Button
             variant="outline"
             size="sm"
             className="text-green-600 border-green-200 bg-green-50 hover:bg-green-100"
             onClick={() => setPasteModalOpen(true)}
         >
-            <ClipboardPaste size={16} className="mr-1" /> Paste Order
+            <ClipboardPaste size={16} className="mr-1" /> Paste
         </Button>
       </div>
 
-      {/* 3. New Order Form Header */}
-      <h2 className="text-base font-bold text-slate-900 mb-2">➕ Create New Order</h2>
-
-      {/* 4. Customer Section (Improved Contrast) */}
-      <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-300 mb-3 relative z-20">
-        <div className="flex items-center gap-2 mb-2 flex-shrink-0">
+      {/* 3. Customer Section */}
+      <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-300 mb-2 relative z-20">
+        <div className="flex items-center gap-2 mb-1.5">
             <User className="text-sky-600" size={16} />
             <h2 className="font-bold text-slate-900 text-sm">Who is buying?</h2>
         </div>
 
-        <div className="space-y-2 max-h-56 overflow-y-auto">
+        <div className="space-y-1.5">
             {/* Name and Phone Row */}
             <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -295,10 +293,10 @@ export const Orders: React.FC = () => {
         </div>
       </div>
 
-      {/* 5. Menu Grid */}
-      <div className="flex-1 overflow-y-auto pb-32 no-scrollbar">
-        <h2 className="font-bold text-slate-800 mb-2 px-1 text-sm">Today's Menu Items</h2>
-        <div className="grid grid-cols-2 gap-3">
+      {/* 4. Menu Grid */}
+      <div>
+        <h2 className="font-bold text-slate-800 mb-1 text-sm">Today's Menu Items</h2>
+        <div className="grid grid-cols-2 gap-2">
             {availableMenu.map(item => {
                 const stock = getRemainingStock(item.id);
                 const inCart = cart.find(c => c.item.id === item.id)?.qty || 0;
@@ -310,13 +308,13 @@ export const Orders: React.FC = () => {
                         key={item.id}
                         onClick={() => !isSoldOut && addToCart(item)}
                         disabled={isSoldOut}
-                        className={`relative p-3 rounded-xl border text-left transition-all active:scale-95 ${
-                            isSoldOut 
-                                ? 'bg-slate-100 border-slate-200 opacity-60' 
+                        className={`relative p-2 rounded-lg border text-left transition-all active:scale-95 ${
+                            isSoldOut
+                                ? 'bg-slate-100 border-slate-200 opacity-60'
                                 : 'bg-white border-slate-200 shadow-sm hover:border-sky-500'
                         }`}
                     >
-                        <div className="flex justify-between items-start mb-2">
+                        <div className="flex justify-between items-start mb-1.5">
                             <span className={`text-xs font-bold px-2 py-1 rounded-md ${
                                 isSoldOut ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                             }`}>

@@ -7,7 +7,7 @@ import { Order, Customer } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
 
 export const Payments: React.FC = () => {
-  const { orders, markOrderPaid, addCustomer, updateOrder } = useAppStore();
+  const { orders, customers, markOrderPaid, addCustomer, updateOrder } = useAppStore();
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid' | 'all'>('unpaid');
   const [searchTerm, setSearchTerm] = useState('');
 
