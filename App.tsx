@@ -5,6 +5,7 @@ import { AppProvider } from './store';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Orders } from './pages/Orders';
+import { Reserved } from './pages/Reserved';
 import { Payments } from './pages/Payments';
 import { Kitchen } from './pages/Kitchen';
 import { Customers } from './pages/Customers';
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/reserved" element={<Reserved />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/kitchen" element={<Kitchen />} />
             <Route path="/customers" element={<Customers />} />

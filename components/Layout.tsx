@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Wallet, ShoppingBag, Users, ChefHat, Plus, Settings } from 'lucide-react';
+import { LayoutDashboard, Wallet, ShoppingBag, Users, ChefHat, Plus, Settings, Clock } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +14,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Home' },
     { path: '/orders', icon: ShoppingBag, label: 'Orders' },
+    { path: '/reserved', icon: Clock, label: 'Reserved' },
     { path: '/kitchen', icon: ChefHat, label: 'Kitchen' },
     { path: '/payments', icon: Wallet, label: 'Payments' },
     { path: '/customers', icon: Users, label: 'Customers' },

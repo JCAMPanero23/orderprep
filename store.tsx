@@ -32,6 +32,10 @@ interface AppState {
   addCustomer: (customer: Customer) => void;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
 
+  // Import
+  importMenuItems: (items: MenuItem[], replaceAll?: boolean) => void;
+  importCustomers: (customers: Customer[], replaceAll?: boolean) => void;
+
   // System
   resetDailyData: () => void; // Reset orders, menu daily limits, and customer order history
   fullReset: () => void; // Reset ALL data (orders, menu, customers, inventory)
@@ -255,6 +259,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setInventory(MOCK_INVENTORY);
   };
 
+  // --- Import Functions ---
+  const importMenuItems = (items: MenuItem[], replaceAll: boolean = false) => {
+    if (replaceAll) {
+      setMenu(items);
+    } else {
+      setMenu(prev => [...prev, ...items]);
+    }
+  };
+
+  const importCustomers = (newCustomers: Customer[], replaceAll: boolean = false) => {
+    if (replaceAll) {
+      setCustomers(newCustomers);
+    } else {
+      setCustomers(prev => [...prev, ...newCustomers]);
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       orders, menu, customers, inventory,
@@ -262,6 +283,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateMenu, addMenuItem, publishDailyMenu, getRemainingStock, toggleMenuAvailability, resetDailyStock,
       updateInventory, addInventoryItem,
       addCustomer, updateCustomer,
+      importMenuItems, importCustomers,
       resetDailyData, fullReset
     }}>
       {children}
