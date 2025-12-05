@@ -37,6 +37,7 @@ export const Orders: React.FC = () => {
     action: 'paid' | 'unpaid';
   } | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState('friendly');
+  const [isSoldOutMessage, setIsSoldOutMessage] = useState(false); // Track if sending sold-out message
 
   // Filter menu for available items
   const availableMenu = menu.filter(m => m.isAvailable && (m.dailyLimit || 0) > 0);
@@ -143,6 +144,7 @@ export const Orders: React.FC = () => {
       order: newOrder,
       action: mode === 'payCash' ? 'paid' : 'unpaid'
     });
+    setIsSoldOutMessage(false); // This is an order confirmation, not a sold-out message
     setWhatsappSendModalOpen(true);
 
     // Don't clear cart yet - wait for WhatsApp confirmation
@@ -185,7 +187,7 @@ export const Orders: React.FC = () => {
     setParsedResult(null);
   };
 
-  // Handle sold-out item click - open WhatsApp to notify customer
+  // Handle sold-out item click - show modal with sold-out message
   const handleSoldOutClick = (soldOutItem: MenuItem) => {
     if (!customerPhone.trim()) {
       alert('Please enter customer phone number first to send WhatsApp notification');
@@ -208,10 +210,11 @@ export const Orders: React.FC = () => {
 
     const message = generateSoldOutMessage(customerName || 'Customer', soldOutItem.name, availableItems);
 
-    // Open WhatsApp with message
-    const cleanPhone = customerPhone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    // Show WhatsApp modal instead of directly opening
+    setOrderConfirmationMessage(message);
+    setIsSoldOutMessage(true);
+    setPendingOrderAction(null); // No order action for sold-out messages
+    setWhatsappSendModalOpen(true);
   };
 
   // Generate sold-out message
@@ -249,11 +252,11 @@ export const Orders: React.FC = () => {
 
   // WhatsApp send confirmation callback
   const handleWhatsAppSendConfirmed = () => {
-    if (pendingOrderAction) {
-      // Mark as paid if needed (already added to orders, just need to update payment status)
-      // Note: Order was already added in handleCheckout, payment status already set correctly
-
-      // Clear cart and form
+    if (isSoldOutMessage) {
+      // For sold-out messages, just close the modal - don't clear cart
+      setIsSoldOutMessage(false);
+    } else if (pendingOrderAction) {
+      // For order confirmations, clear cart and form
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
@@ -262,9 +265,8 @@ export const Orders: React.FC = () => {
       setSelectedCustomer(null);
       setIsFlashSale(false);
       setFlashSaleDiscount(5);
+      setPendingOrderAction(null);
     }
-
-    setPendingOrderAction(null);
   };
 
   // Template change callback
@@ -739,9 +741,9 @@ export const Orders: React.FC = () => {
         customerPhone={customerPhone}
         customerName={customerName || 'Customer'}
         onConfirmSent={handleWhatsAppSendConfirmed}
-        onTemplateChange={handleTemplateChange}
-        availableTemplates={RECEIPT_TEMPLATES}
-        currentTemplateId={selectedTemplateId}
+        onTemplateChange={!isSoldOutMessage ? handleTemplateChange : undefined}
+        availableTemplates={!isSoldOutMessage ? RECEIPT_TEMPLATES : undefined}
+        currentTemplateId={!isSoldOutMessage ? selectedTemplateId : undefined}
       />
     </div>
   );
