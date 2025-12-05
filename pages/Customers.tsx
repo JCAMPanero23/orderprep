@@ -122,7 +122,7 @@ export const Customers: React.FC = () => {
                             </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-sm text-slate-600">
-                            <span className="flex items-center gap-1"><Phone size={14}/> {c.phone}</span>
+                            <span className="flex items-center gap-1 min-w-[140px]"><Phone size={14}/> {c.phone}</span>
                             <span className="flex items-center gap-1"><MapPin size={14}/> Unit {c.unitNumber || '?'}</span>
                         </div>
                     </div>

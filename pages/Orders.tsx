@@ -191,10 +191,10 @@ export const Orders: React.FC = () => {
   return (
     <div className="h-[calc(100vh-140px)] flex flex-col md:h-auto overflow-y-auto pb-32">
       {/* 1. Header */}
-      <h1 className="text-2xl font-bold text-slate-900 mb-3">Orders</h1>
+      <h1 className="text-xl font-bold text-slate-900 mb-2">Orders</h1>
 
       {/* 2. Paste Order Button */}
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-end mb-2">
         <Button
             variant="outline"
             size="sm"
@@ -206,16 +206,16 @@ export const Orders: React.FC = () => {
       </div>
 
       {/* 3. New Order Form Header */}
-      <h2 className="text-lg font-bold text-slate-900 mb-3">➕ Create New Order</h2>
+      <h2 className="text-base font-bold text-slate-900 mb-2">➕ Create New Order</h2>
 
       {/* 4. Customer Section (Improved Contrast) */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-300 mb-4 relative z-20">
-        <div className="flex items-center gap-2 mb-2">
-            <User className="text-sky-600" size={18} />
-            <h2 className="font-bold text-slate-900">Who is buying?</h2>
+      <div className="bg-white p-3 rounded-xl shadow-sm border border-slate-300 mb-3 relative z-20">
+        <div className="flex items-center gap-2 mb-2 flex-shrink-0">
+            <User className="text-sky-600" size={16} />
+            <h2 className="font-bold text-slate-900 text-sm">Who is buying?</h2>
         </div>
-        
-        <div className="space-y-2">
+
+        <div className="space-y-2 max-h-56 overflow-y-auto">
             {/* Name and Phone Row */}
             <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -228,7 +228,7 @@ export const Orders: React.FC = () => {
                             setSelectedCustomer(null); // Reset selection on edit
                         }}
                         placeholder="Name"
-                        className="w-full p-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 focus:ring-0 outline-none font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
+                        className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 focus:ring-0 outline-none font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal text-sm"
                     />
 
                     {/* Autocomplete Dropdown */}
@@ -251,15 +251,15 @@ export const Orders: React.FC = () => {
                     )}
                 </div>
 
-                <div className="w-1/3">
+                <div className="flex-1">
                      <div className="relative h-full">
-                        <Phone className="absolute left-3 top-3.5 text-slate-400" size={16} />
+                        <Phone className="absolute left-2 top-2.5 text-slate-400" size={14} />
                         <input
                             type="tel"
                             value={customerPhone}
                             onChange={(e) => setCustomerPhone(e.target.value)}
                             placeholder="Phone"
-                            className="w-full h-full pl-9 pr-3 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none font-medium text-slate-900 text-sm"
+                            className="w-full h-full pl-8 pr-2 py-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none font-medium text-slate-900 text-sm"
                         />
                      </div>
                 </div>
@@ -273,17 +273,17 @@ export const Orders: React.FC = () => {
                         value={customerUnit}
                         onChange={(e) => setCustomerUnit(e.target.value)}
                         placeholder="Unit # (optional)"
-                        className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-sm"
+                        className="w-full py-1.5 px-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-xs"
                     />
                 </div>
-                <div className="w-1/3">
+                <div className="flex-1">
                     <input
                         type="text"
                         value={customerBuilding}
                         onChange={(e) => setCustomerBuilding(e.target.value)}
                         placeholder="Building"
                         list="building-suggestions"
-                        className="w-full p-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-sm"
+                        className="w-full py-1.5 px-2 bg-white border-2 border-slate-300 rounded-lg focus:border-sky-500 outline-none text-slate-900 text-xs"
                     />
                     <datalist id="building-suggestions">
                         {uniqueBuildings.map((building, idx) => (
@@ -297,7 +297,7 @@ export const Orders: React.FC = () => {
 
       {/* 5. Menu Grid */}
       <div className="flex-1 overflow-y-auto pb-32 no-scrollbar">
-        <h2 className="font-bold text-slate-800 mb-3 px-1">Today's Menu Items</h2>
+        <h2 className="font-bold text-slate-800 mb-2 px-1 text-sm">Today's Menu Items</h2>
         <div className="grid grid-cols-2 gap-3">
             {availableMenu.map(item => {
                 const stock = getRemainingStock(item.id);
