@@ -160,3 +160,40 @@ export interface ParsedCustomerInfo {
   floor?: string;
   confidence: 'high' | 'medium' | 'low';
 }
+
+// ============================================
+// AUTHENTICATION TYPES
+// ============================================
+
+export interface User {
+  id: string;
+  email: string;
+  businessName: string;
+  ownerName: string;
+  phone?: string;
+  createdAt: string;
+  lastLogin: string;
+  authProvider?: 'email' | 'google'; // How they signed up
+  googleId?: string; // Google account ID if using Google Sign-In
+  photoURL?: string; // Profile photo URL
+}
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  token: string | null;
+}
+
+export interface SignUpData {
+  email: string;
+  password: string;
+  businessName: string;
+  ownerName: string;
+  phone?: string;
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}

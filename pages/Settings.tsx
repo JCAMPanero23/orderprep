@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
+import { useAuth } from '../AuthContext';
 import { Card, Button, Modal } from '../components/UI';
-import { Settings as SettingsIcon, AlertTriangle, RotateCcw, Trash2, Upload, FileSpreadsheet } from 'lucide-react';
+import { BackupSettings } from '../components/BackupSettings';
+import { Settings as SettingsIcon, AlertTriangle, RotateCcw, Trash2, Upload, FileSpreadsheet, User, LogOut } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const { resetDailyData, fullReset, importMenuItems, importCustomers, menu, customers } = useAppStore();
+  const { authState, logout } = useAuth();
   const [showDailyResetConfirm, setShowDailyResetConfirm] = useState(false);
   const [showFullResetConfirm, setShowFullResetConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -192,12 +195,109 @@ export const Settings: React.FC = () => {
     setPendingImport(null);
   };
 
+  const handleLogout = () => {
+    const confirmed = window.confirm(
+      '⚠️ LOG OUT\n\n' +
+      'Are you sure you want to log out?\n\n' +
+      'Your data will be saved and you can log back in anytime.'
+    );
+
+    if (confirmed) {
+      logout();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <SettingsIcon className="text-sky-600" size={24} />
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
       </div>
+
+      {/* Profile Section */}
+      <Card>
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <User className="text-blue-600" size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 text-lg mb-1">Profile Information</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Your account details
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 border-t border-slate-200 pt-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Business Name</label>
+              <p className="text-base text-slate-900 font-medium">{authState.user?.businessName}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Owner Name</label>
+              <p className="text-base text-slate-900 font-medium">{authState.user?.ownerName}</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+              <p className="text-base text-slate-900 font-medium">{authState.user?.email}</p>
+            </div>
+
+            {authState.user?.phone && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
+                <p className="text-base text-slate-900 font-medium">{authState.user.phone}</p>
+              </div>
+            )}
+
+            {authState.user?.authProvider && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Sign-in Method</label>
+                <p className="text-base text-slate-900 font-medium capitalize">
+                  {authState.user.authProvider === 'google' ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span>Google</span>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Verified</span>
+                    </span>
+                  ) : (
+                    'Email & Password'
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Logout Section */}
+      <Card>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-red-50 rounded-lg">
+              <LogOut className="text-red-600" size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 text-lg mb-1">Log Out</h3>
+              <p className="text-sm text-slate-600 mb-3">
+                Log out of your OrderPrep account. Your data will be saved and you can log back in anytime.
+              </p>
+              <Button
+                variant="secondary"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleLogout}
+              >
+                <LogOut size={16} className="mr-2" />
+                Log Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Backup System Section */}
+      <BackupSettings />
 
       {/* Import Result Alert */}
       {importResult && (
