@@ -626,17 +626,24 @@ export const Kitchen: React.FC = () => {
         {[
             { id: 'plan', label: 'Plan Today', icon: ChefHat },
             { id: 'recipes', label: 'Menu List', icon: BookOpen },
-            { id: 'inventory', label: 'Inventory', icon: ShoppingBasket }
+            { id: 'inventory', label: 'Inventory', icon: ShoppingBasket, comingSoon: true }
         ].map(tab => (
             <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  if (!('comingSoon' in tab) || !tab.comingSoon) {
+                    setActiveTab(tab.id as any);
+                  }
+                }}
+                disabled={'comingSoon' in tab && tab.comingSoon}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${
                     activeTab === tab.id ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-500'
-                }`}
+                } ${('comingSoon' in tab && tab.comingSoon) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                title={'comingSoon' in tab && tab.comingSoon ? 'Coming Soon - Not yet integrated' : ''}
             >
                 <tab.icon size={16} />
                 {tab.label}
+                {('comingSoon' in tab && tab.comingSoon) && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded ml-1">Coming Soon</span>}
             </button>
         ))}
       </div>
@@ -1085,34 +1092,31 @@ export const Kitchen: React.FC = () => {
           </div>
       )}
 
-      {/* 3. INVENTORY */}
+      {/* 3. INVENTORY - Coming Soon */}
       {activeTab === 'inventory' && (
           <div className="space-y-3 animate-in fade-in">
-              <div className="flex justify-between items-center mb-2">
-                  <h2 className="font-bold text-slate-800">Ingredients Stock</h2>
-                  <Button size="sm" variant="outline">
-                      <Plus size={16} /> Add
-                  </Button>
-              </div>
-              {inventory.map(item => (
-                  <Card key={item.id} className="flex justify-between items-center p-3">
+              <Card className="bg-amber-50 border-amber-200 p-8 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                      <div className="bg-amber-100 p-4 rounded-full">
+                          <ShoppingBasket className="text-amber-600" size={32} />
+                      </div>
                       <div>
-                          <p className="font-bold text-slate-900">{item.name}</p>
-                          {item.currentStock <= item.lowStockThreshold && (
-                              <Badge variant="danger" className="mt-1">Low Stock</Badge>
-                          )}
+                          <h3 className="text-lg font-bold text-amber-900 mb-1">Inventory Management</h3>
+                          <p className="text-sm text-amber-700 mb-4">
+                              This feature is coming soon! It will help you track ingredient stock levels and manage your inventory efficiently.
+                          </p>
+                          <div className="bg-white rounded-lg p-3 text-xs text-slate-600 inline-block">
+                              <p className="font-semibold text-amber-700 mb-2">📋 Planned Features:</p>
+                              <ul className="text-left space-y-1">
+                                  <li>✓ Track ingredient quantities</li>
+                                  <li>✓ Set low stock alerts</li>
+                                  <li>✓ Auto-calculate shopping needs</li>
+                                  <li>✓ Recipe integration</li>
+                              </ul>
+                          </div>
                       </div>
-                      <div className="text-right">
-                          <span className="text-xl font-bold text-slate-800">{item.currentStock}</span>
-                          <span className="text-xs text-slate-500 ml-1">{item.unit}</span>
-                      </div>
-                  </Card>
-              ))}
-              {inventory.length === 0 && (
-                  <div className="text-center p-8 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
-                      No ingredients tracked yet.
                   </div>
-              )}
+              </Card>
           </div>
       )}
 
