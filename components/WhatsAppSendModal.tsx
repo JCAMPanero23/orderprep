@@ -30,6 +30,15 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [waitingForConfirmation, setWaitingForConfirmation] = useState(false);
 
+  // Extract dynamic placeholders from message
+  const extractPlaceholders = (text: string): string[] => {
+    const regex = /\{[^}]+\}/g;
+    return text.match(regex) || [];
+  };
+
+  const originalPlaceholders = extractPlaceholders(message);
+  const currentPlaceholders = extractPlaceholders(editableMessage);
+
   // Reset state when modal opens or message changes
   useEffect(() => {
     if (isOpen) {
@@ -121,13 +130,24 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
               ) : (
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-sm text-slate-900">Message Preview</h3>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowTemplateSelector(true)}
-                  >
-                    <Edit size={14} /> Change Template
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setShowTemplateSelector(true)}
+                    >
+                      <Edit size={14} /> Change Template
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={() => {/* Template override functionality - message is already editable */}}
+                      title="You can customize this template by editing the message below"
+                    >
+                      <Edit size={14} /> Override Template
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -158,6 +178,32 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
                   className="w-full h-64 p-3 border border-slate-300 rounded-lg text-sm font-sans leading-relaxed resize-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
                   placeholder="Your message will appear here..."
                 />
+                {originalPlaceholders.length > 0 && (
+                  <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-xs font-bold text-red-700 mb-1">
+                      ⚠️ Do not remove dynamic fields:
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {originalPlaceholders.map((placeholder, idx) => (
+                        <span
+                          key={idx}
+                          className={`text-xs px-2 py-0.5 rounded font-mono font-bold ${
+                            currentPlaceholders.includes(placeholder)
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-red-200 text-red-900 line-through'
+                          }`}
+                        >
+                          {placeholder}
+                        </span>
+                      ))}
+                    </div>
+                    {originalPlaceholders.some(p => !currentPlaceholders.includes(p)) && (
+                      <p className="text-xs text-red-600 mt-1 font-medium">
+                        ❌ Warning: Some dynamic fields have been removed!
+                      </p>
+                    )}
+                  </div>
+                )}
                 <p className="text-xs text-slate-500 mt-1">
                   Preview how it will look in WhatsApp. Edit if needed.
                 </p>

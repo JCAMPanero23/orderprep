@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
-import { Card, Button } from '../components/UI';
+import { Card, Button, Modal } from '../components/UI';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Copy, Check, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
 
@@ -8,6 +8,11 @@ export const Dashboard: React.FC = () => {
   const { orders, menu, getRemainingStock } = useAppStore();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+
+  // Flash Sale Modal State
+  const [showFlashSaleModal, setShowFlashSaleModal] = useState(false);
+  const [flashSaleItems, setFlashSaleItems] = useState<{[key: string]: {selected: boolean, price: number}}>({});
+  const [flashSaleCopied, setFlashSaleCopied] = useState(false);
 
   // Stats Logic
   const today = new Date().toISOString().split('T')[0];
@@ -65,6 +70,97 @@ export const Dashboard: React.FC = () => {
         document.execCommand('copy');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackErr) {
+        alert('Failed to copy. Please try again.');
+      }
+      document.body.removeChild(textarea);
+    }
+  };
+
+  // Flash Sale Functions
+  const handleOpenFlashSale = () => {
+    // Initialize flash sale items with available stock
+    const availableItems = menu.filter(m => m.isAvailable && getRemainingStock(m.id) > 0);
+    const initialItems: {[key: string]: {selected: boolean, price: number}} = {};
+    availableItems.forEach(item => {
+      initialItems[item.id] = {
+        selected: false,
+        price: item.price - 5 // Default 5 AED discount
+      };
+    });
+    setFlashSaleItems(initialItems);
+    setShowFlashSaleModal(true);
+  };
+
+  const toggleFlashSaleItem = (itemId: string) => {
+    setFlashSaleItems(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], selected: !prev[itemId].selected }
+    }));
+  };
+
+  const updateFlashSalePrice = (itemId: string, price: number) => {
+    setFlashSaleItems(prev => ({
+      ...prev,
+      [itemId]: { ...prev[itemId], price }
+    }));
+  };
+
+  const generateFlashSaleMenu = () => {
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const dayName = days[new Date().getDay()];
+
+    let text = `*${dayName} Flash Sale!!*\n\n(Todays Lunch item)\n\n`;
+
+    const selectedMains = menu.filter(m => m.category === 'Main' && m.isAvailable && flashSaleItems[m.id]?.selected);
+    const selectedOthers = menu.filter(m => m.category !== 'Main' && m.isAvailable && flashSaleItems[m.id]?.selected);
+
+    if (selectedMains.length > 0) {
+      text += `*Main menu:*\n`;
+      selectedMains.forEach(item => {
+        const stock = getRemainingStock(item.id);
+        if (stock > 0) {
+          const flashPrice = flashSaleItems[item.id].price;
+          text += `*${item.name.toUpperCase()}* ${flashPrice}aed only!*\n—${item.description || ''}\n\n`;
+        }
+      });
+    }
+
+    if (selectedOthers.length > 0) {
+      text += `*DESSERTS & SNACKS:*\n`;
+      selectedOthers.forEach(item => {
+        const stock = getRemainingStock(item.id);
+        if (stock > 0) {
+          const flashPrice = flashSaleItems[item.id].price;
+          text += `*${item.name}* ${flashPrice}aed only!*\n`;
+        }
+      });
+    }
+
+    return text;
+  };
+
+  const copyFlashSaleToClipboard = async () => {
+    const selectedCount = Object.values(flashSaleItems).filter(item => item.selected).length;
+    if (selectedCount === 0) {
+      alert('Please select at least one item for flash sale');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(generateFlashSaleMenu());
+      setFlashSaleCopied(true);
+      setTimeout(() => setFlashSaleCopied(false), 2000);
+    } catch (err) {
+      const text = generateFlashSaleMenu();
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setFlashSaleCopied(true);
+        setTimeout(() => setFlashSaleCopied(false), 2000);
       } catch (fallbackErr) {
         alert('Failed to copy. Please try again.');
       }
@@ -137,7 +233,7 @@ export const Dashboard: React.FC = () => {
           fullWidth
           size="lg"
           className="py-4 text-base bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-200"
-          onClick={() => navigate('/orders')}
+          onClick={handleOpenFlashSale}
           title="Create a flash sale offer to clear inventory"
         >
           <Zap size={18} className="mr-1" /> Flash Sale
@@ -196,6 +292,90 @@ export const Dashboard: React.FC = () => {
             </pre>
         </div>
       </Card>
+
+      {/* Flash Sale Modal */}
+      <Modal
+        isOpen={showFlashSaleModal}
+        onClose={() => setShowFlashSaleModal(false)}
+        title="Create Flash Sale Menu"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">Select items and set flash sale prices:</p>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {menu.filter(m => m.isAvailable && getRemainingStock(m.id) > 0).map(item => {
+              const stock = getRemainingStock(item.id);
+              return (
+                <div key={item.id} className="bg-white border border-slate-200 rounded-lg p-3">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={flashSaleItems[item.id]?.selected || false}
+                      onChange={() => toggleFlashSaleItem(item.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-bold text-slate-900">{item.name}</h4>
+                          <p className="text-xs text-slate-500">{item.description}</p>
+                          <p className="text-xs text-amber-600 mt-1">Stock: {stock} left</p>
+                        </div>
+                        <span className="text-xs bg-slate-100 px-2 py-1 rounded font-medium">
+                          Original: {item.price} AED
+                        </span>
+                      </div>
+                      {flashSaleItems[item.id]?.selected && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <label className="text-xs font-medium text-slate-700">Flash Price:</label>
+                          <input
+                            type="number"
+                            value={flashSaleItems[item.id]?.price || 0}
+                            onChange={(e) => updateFlashSalePrice(item.id, parseInt(e.target.value) || 0)}
+                            className="w-20 px-2 py-1 border border-amber-300 rounded text-sm font-bold text-amber-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                            min="0"
+                          />
+                          <span className="text-xs text-slate-500">AED</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="border-t pt-3">
+            <h4 className="font-bold text-sm mb-2">Preview:</h4>
+            <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 max-h-48 overflow-y-auto">
+              <pre className="text-[10px] text-slate-600 whitespace-pre-wrap font-sans leading-relaxed">
+                {generateFlashSaleMenu()}
+              </pre>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => setShowFlashSaleModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              fullWidth
+              className="bg-amber-500 hover:bg-amber-600"
+              onClick={() => {
+                copyFlashSaleToClipboard();
+                setShowFlashSaleModal(false);
+              }}
+            >
+              {flashSaleCopied ? <Check size={16} className="mr-1" /> : <Copy size={16} className="mr-1" />}
+              {flashSaleCopied ? 'Copied!' : 'Copy to Clipboard'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -4,27 +4,45 @@ import { useAppStore } from '../store';
 import { Card, Button, Modal, Input } from '../components/UI';
 import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
 import { Check, MessageCircle, Clock, Search, Copy, Send, Eye, UserPlus } from 'lucide-react';
-import { Order, Customer } from '../types';
+import { Order, Customer, ReceiptTemplate } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
+
+// Payment Reminder Templates
+const REMINDER_TEMPLATES: ReceiptTemplate[] = [
+  {
+    id: 'friendly',
+    name: '👋 Friendly Reminder',
+    content: 'Hi {customerName}! Hope you enjoyed the food. Just a gentle reminder regarding the {amount} AED payment. Thanks!',
+    isDefault: true
+  },
+  {
+    id: 'professional',
+    name: '👔 Professional',
+    content: 'Hello {customerName}. This is a reminder for your outstanding balance of {amount} AED. Please settle at your earliest convenience. Thank you.'
+  },
+  {
+    id: 'final',
+    name: '⚠️ Final Notice',
+    content: '{customerName}, this is a final notice regarding your outstanding payment of {amount} AED. We kindly request immediate settlement to continue service. Thank you for your understanding.'
+  }
+];
 
 export const Payments: React.FC = () => {
   const { orders, customers, markOrderPaid, addCustomer, updateOrder } = useAppStore();
   const [activeTab, setActiveTab] = useState<'unpaid' | 'paid' | 'all'>('unpaid');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Reminder Modal State
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [showReminderModal, setShowReminderModal] = useState(false);
-
   // Preview Order Modal State
   const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
-  // WhatsApp Send Modal State (for Mark Paid)
+  // WhatsApp Send Modal State (for both Mark Paid and Reminders)
   const [whatsappSendModalOpen, setWhatsappSendModalOpen] = useState(false);
   const [whatsappMessage, setWhatsappMessage] = useState('');
   const [whatsappCustomerPhone, setWhatsappCustomerPhone] = useState('');
   const [whatsappCustomerName, setWhatsappCustomerName] = useState('');
-  const [pendingMarkPaidOrder, setPendingMarkPaidOrder] = useState<Order | null>(null);
+  const [whatsappTemplates, setWhatsappTemplates] = useState<ReceiptTemplate[] | undefined>(undefined);
+  const [currentTemplateId, setCurrentTemplateId] = useState<string>('friendly');
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
 
   // Convert to Customer Modal State
   const [convertOrder, setConvertOrder] = useState<Order | null>(null);
@@ -47,8 +65,19 @@ export const Payments: React.FC = () => {
     .filter(o => o.customerName.toLowerCase().includes(searchTerm.toLowerCase()));
 
   const handleRemind = (order: Order) => {
-    setSelectedOrder(order);
-    setShowReminderModal(true);
+    // Generate friendly reminder message by default
+    const template = REMINDER_TEMPLATES.find(t => t.id === 'friendly');
+    const message = template?.content
+      .replace('{customerName}', order.customerName)
+      .replace('{amount}', order.totalAmount.toString()) || '';
+
+    setWhatsappMessage(message);
+    setWhatsappCustomerPhone(order.customerPhone);
+    setWhatsappCustomerName(order.customerName);
+    setWhatsappTemplates(REMINDER_TEMPLATES);
+    setCurrentTemplateId('friendly');
+    setPendingOrder(order);
+    setWhatsappSendModalOpen(true);
   };
 
   const handleMarkPaid = (order: Order) => {
@@ -60,28 +89,34 @@ export const Payments: React.FC = () => {
               setWhatsappMessage(receiptMsg);
               setWhatsappCustomerPhone(order.customerPhone);
               setWhatsappCustomerName(order.customerName);
-              setPendingMarkPaidOrder(order);
+              setWhatsappTemplates(undefined); // No templates for receipts
+              setPendingOrder(order);
               setWhatsappSendModalOpen(true);
           }
       }
   };
 
-  // Handle WhatsApp send confirmation for Mark Paid
-  const handleWhatsAppMarkPaidConfirmed = () => {
-    setPendingMarkPaidOrder(null);
+  // Handle WhatsApp template change (for reminders)
+  const handleWhatsAppTemplateChange = (templateId: string) => {
+    if (!pendingOrder) return;
+
+    const template = REMINDER_TEMPLATES.find(t => t.id === templateId);
+    if (template) {
+      const message = template.content
+        .replace('{customerName}', pendingOrder.customerName)
+        .replace('{amount}', pendingOrder.totalAmount.toString());
+      setWhatsappMessage(message);
+      setCurrentTemplateId(templateId);
+    }
+  };
+
+  // Handle WhatsApp send confirmation
+  const handleWhatsAppConfirmed = () => {
+    setPendingOrder(null);
     setWhatsappMessage('');
     setWhatsappCustomerPhone('');
     setWhatsappCustomerName('');
-  };
-
-  const sendWhatsApp = (message: string) => {
-    if (!selectedOrder) return;
-    setWhatsappMessage(message);
-    setWhatsappCustomerPhone(selectedOrder.customerPhone);
-    setWhatsappCustomerName(selectedOrder.customerName);
-    setPendingMarkPaidOrder(selectedOrder);
-    setShowReminderModal(false);
-    setWhatsappSendModalOpen(true);
+    setWhatsappTemplates(undefined);
   };
 
   const handleConvertToCustomer = (order: Order) => {
@@ -294,39 +329,6 @@ export const Payments: React.FC = () => {
         )}
       </div>
 
-      {/* WhatsApp Reminder Modal */}
-      <Modal 
-        isOpen={showReminderModal} 
-        onClose={() => setShowReminderModal(false)} 
-        title="Send Reminder"
-      >
-        <div className="space-y-3">
-            <p className="text-sm text-slate-600 mb-4">Choose a message template for <b>{selectedOrder?.customerName}</b>:</p>
-            
-            <button onClick={() => sendWhatsApp(`Hi ${selectedOrder?.customerName}! Hope you enjoyed the food. Just a gentle reminder regarding the ${selectedOrder?.totalAmount} AED payment. Thanks!`)} className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all group">
-                <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-slate-800 text-sm">👋 Friendly Reminder</span>
-                    <Copy size={14} className="text-slate-400 group-hover:text-sky-500" />
-                </div>
-                <p className="text-xs text-slate-500">Hi {selectedOrder?.customerName}! Hope you enjoyed...</p>
-            </button>
-             <button onClick={() => sendWhatsApp(`Hello ${selectedOrder?.customerName}. This is a reminder for your outstanding balance of ${selectedOrder?.totalAmount} AED. Please settle at your earliest convenience. Thank you.`)} className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all group">
-                <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-slate-800 text-sm">👔 Professional</span>
-                    <Copy size={14} className="text-slate-400 group-hover:text-sky-500" />
-                </div>
-                <p className="text-xs text-slate-500">Hello {selectedOrder?.customerName}. This is a reminder...</p>
-            </button>
-            <button onClick={() => sendWhatsApp(`${selectedOrder?.customerName}, this is a final notice regarding your outstanding payment of ${selectedOrder?.totalAmount} AED. We kindly request immediate settlement to continue service. Thank you for your understanding.`)} className="w-full text-left p-3 rounded-lg border border-red-200 hover:border-red-500 hover:bg-red-50 transition-all group">
-                <div className="flex justify-between items-center mb-1">
-                    <span className="font-bold text-red-800 text-sm">⚠️ Final Notice</span>
-                    <Copy size={14} className="text-slate-400 group-hover:text-red-500" />
-                </div>
-                <p className="text-xs text-slate-500">{selectedOrder?.customerName}, this is a final notice...</p>
-            </button>
-        </div>
-      </Modal>
-
       {/* Preview Order Details Modal */}
       {previewOrder && (
         <Modal
@@ -478,17 +480,20 @@ export const Payments: React.FC = () => {
         </Modal>
       )}
 
-      {/* WhatsApp Send Modal (for Mark Paid) */}
+      {/* WhatsApp Send Modal (for both Mark Paid and Reminders) */}
       <WhatsAppSendModal
         isOpen={whatsappSendModalOpen}
         onClose={() => {
           setWhatsappSendModalOpen(false);
-          handleWhatsAppMarkPaidConfirmed();
+          handleWhatsAppConfirmed();
         }}
         message={whatsappMessage}
         customerPhone={whatsappCustomerPhone}
         customerName={whatsappCustomerName}
-        onConfirmSent={handleWhatsAppMarkPaidConfirmed}
+        onConfirmSent={handleWhatsAppConfirmed}
+        availableTemplates={whatsappTemplates}
+        currentTemplateId={currentTemplateId}
+        onTemplateChange={whatsappTemplates ? handleWhatsAppTemplateChange : undefined}
       />
     </div>
   );
