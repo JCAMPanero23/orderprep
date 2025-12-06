@@ -2,11 +2,17 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order, MenuItem, Customer, Ingredient } from './types';
 
+interface FlashSaleItem {
+  price: number;
+  expiresAt: string;
+}
+
 interface AppState {
   orders: Order[];
   menu: MenuItem[];
   customers: Customer[];
   inventory: Ingredient[];
+  flashSaleItems: { [menuItemId: string]: FlashSaleItem };
 
   // Actions
   addOrder: (order: Order) => void;
@@ -23,6 +29,12 @@ interface AppState {
   getRemainingStock: (itemId: string) => number;
   toggleMenuAvailability: (id: string) => void;
   resetDailyStock: () => void;
+
+  // Flash Sale
+  setFlashSale: (items: { [menuItemId: string]: number }) => void; // itemId -> flash price
+  clearFlashSale: () => void;
+  getFlashSalePrice: (itemId: string) => number | null;
+  isItemOnFlashSale: (itemId: string) => boolean;
 
   // Inventory
   updateInventory: (id: string, updates: Partial<Ingredient>) => void;
@@ -90,10 +102,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved ? JSON.parse(saved) : MOCK_INVENTORY;
   });
 
+  const [flashSaleItems, setFlashSaleItems] = useState<{ [menuItemId: string]: FlashSaleItem }>(() => {
+    const saved = localStorage.getItem('orderprep_flashsale');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   useEffect(() => { localStorage.setItem('orderprep_orders', JSON.stringify(orders)); }, [orders]);
   useEffect(() => { localStorage.setItem('orderprep_menu', JSON.stringify(menu)); }, [menu]);
   useEffect(() => { localStorage.setItem('orderprep_customers', JSON.stringify(customers)); }, [customers]);
   useEffect(() => { localStorage.setItem('orderprep_inventory', JSON.stringify(inventory)); }, [inventory]);
+  useEffect(() => { localStorage.setItem('orderprep_flashsale', JSON.stringify(flashSaleItems)); }, [flashSaleItems]);
 
   // --- Orders ---
   const addOrder = (order: Order) => {
@@ -199,7 +217,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getRemainingStock = (itemId: string) => {
     const item = menu.find(m => m.id === itemId);
     if (!item || !item.dailyLimit) return 0;
-    
+
     const today = new Date().toISOString().split('T')[0];
     const todaySold = orders
         .filter(o => o.deliveryDate.startsWith(today) && o.status !== 'cancelled')
@@ -207,8 +225,53 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const orderItem = order.items.find(i => i.menuItemId === itemId);
             return sum + (orderItem ? orderItem.quantity : 0);
         }, 0);
-    
+
     return Math.max(0, item.dailyLimit - todaySold);
+  };
+
+  // --- Flash Sale ---
+  const setFlashSale = (items: { [menuItemId: string]: number }) => {
+    // Set flash sale to expire at end of day
+    const expiresAt = new Date();
+    expiresAt.setHours(23, 59, 59, 999);
+
+    const flashSale: { [menuItemId: string]: FlashSaleItem } = {};
+    Object.entries(items).forEach(([itemId, price]) => {
+      flashSale[itemId] = {
+        price,
+        expiresAt: expiresAt.toISOString()
+      };
+    });
+
+    setFlashSaleItems(flashSale);
+  };
+
+  const clearFlashSale = () => {
+    setFlashSaleItems({});
+  };
+
+  const getFlashSalePrice = (itemId: string): number | null => {
+    const flashItem = flashSaleItems[itemId];
+    if (!flashItem) return null;
+
+    // Check if expired
+    const now = new Date();
+    const expires = new Date(flashItem.expiresAt);
+    if (now > expires) {
+      // Auto-clear expired flash sale
+      setFlashSaleItems(prev => {
+        const updated = { ...prev };
+        delete updated[itemId];
+        return updated;
+      });
+      return null;
+    }
+
+    return flashItem.price;
+  };
+
+  const isItemOnFlashSale = (itemId: string): boolean => {
+    return getFlashSalePrice(itemId) !== null;
   };
 
   // --- Inventory ---
@@ -278,9 +341,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   return (
     <AppContext.Provider value={{
-      orders, menu, customers, inventory,
+      orders, menu, customers, inventory, flashSaleItems,
       addOrder, updateOrder, markOrderPaid, markOrderReserved, markOrderHandedOver, cancelOrderWithReason,
       updateMenu, addMenuItem, publishDailyMenu, getRemainingStock, toggleMenuAvailability, resetDailyStock,
+      setFlashSale, clearFlashSale, getFlashSalePrice, isItemOnFlashSale,
       updateInventory, addInventoryItem,
       addCustomer, updateCustomer,
       importMenuItems, importCustomers,

@@ -50,6 +50,24 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
 
   // Step 3: Open WhatsApp with message
   const handleSendToWhatsApp = () => {
+    // Check if any dynamic placeholders were removed
+    const missingPlaceholders = originalPlaceholders.filter(
+      p => !currentPlaceholders.includes(p)
+    );
+
+    if (missingPlaceholders.length > 0) {
+      const confirmed = window.confirm(
+        `⚠️ WARNING: You removed ${missingPlaceholders.length} dynamic field(s):\n\n` +
+        missingPlaceholders.join(', ') +
+        '\n\nThis may result in incorrect information being sent to the customer.\n\n' +
+        'Are you sure you want to continue?'
+      );
+
+      if (!confirmed) {
+        return; // Cancel sending
+      }
+    }
+
     // Clean phone number (remove spaces, dashes, etc.)
     const cleanPhone = customerPhone.replace(/\D/g, '');
 
@@ -76,6 +94,48 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
     }
     setShowTemplateSelector(false);
   };
+
+  // Override template handler - saves edited message as custom template
+  const handleOverrideTemplate = () => {
+    // Check if placeholders are intact
+    const missingPlaceholders = originalPlaceholders.filter(
+      p => !currentPlaceholders.includes(p)
+    );
+
+    if (missingPlaceholders.length > 0) {
+      alert(
+        '⚠️ Cannot save template:\n\n' +
+        `You removed ${missingPlaceholders.length} dynamic field(s):\n` +
+        missingPlaceholders.join(', ') +
+        '\n\nPlease restore all dynamic fields before saving.'
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      '💾 Save this edited message as your new default template?\n\n' +
+      'This will override the current template for future messages.'
+    );
+
+    if (confirmed) {
+      // Save to localStorage
+      const templateKey = `custom_template_${currentTemplateId || 'default'}`;
+      localStorage.setItem(templateKey, editableMessage);
+      alert('✅ Template saved! This will be used as your default for future messages.');
+    }
+  };
+
+  // Load custom template if exists
+  useEffect(() => {
+    if (isOpen && currentTemplateId) {
+      const templateKey = `custom_template_${currentTemplateId}`;
+      const customTemplate = localStorage.getItem(templateKey);
+      if (customTemplate && customTemplate !== message) {
+        // Don't auto-load if it's the same as the current message
+        // This prevents overwriting messages from different sources
+      }
+    }
+  }, [isOpen, currentTemplateId, message]);
 
   return (
     <Modal
@@ -141,11 +201,11 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-amber-300 text-amber-700 hover:bg-amber-50"
-                      onClick={() => {/* Template override functionality - message is already editable */}}
-                      title="You can customize this template by editing the message below"
+                      className="border-slate-300 text-slate-400 cursor-not-allowed opacity-60"
+                      disabled
+                      title="Coming Soon: Save custom templates"
                     >
-                      <Edit size={14} /> Override Template
+                      <Edit size={14} /> Save as Default (Coming Soon)
                     </Button>
                   </div>
                 </div>
@@ -157,10 +217,11 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setEditableMessage(editableMessage)}
-                title="You can freely edit this message"
+                className="border-slate-300 text-slate-400 cursor-not-allowed opacity-60"
+                disabled
+                title="Coming Soon: Save custom templates"
               >
-                <Edit size={14} /> Overwrite Default
+                <Edit size={14} /> Save as Default (Coming Soon)
               </Button>
             </div>
           )}

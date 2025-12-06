@@ -463,13 +463,14 @@ dist/
 - **Base Branch**: `main`
 - **Working Directory**: `D:\OrderPrep`
 
-### Recent Commits (December 3, 2025)
+### Recent Commits (December 6, 2025)
 ```
-140ee8c - feat: Add Slot Mode to Kitchen Plan (Phase 2 Extension / Phase 4)
-b49dae6 - docs: Update CLAUDE.md with development progress tracking
-b57ec96 - feat: Complete Phase 2 Menu Management Enhancements
-fd082cc - fix: Resolve two critical Kitchen Prep bugs (Phase 1)
-4899536 - feat: Add Customer functionality in Customers tab (Phase 0)
+[Latest] - feat: Complete Flash Sale & Customer Discount Integration (Phase 5+)
+858e7b9 - docs: Update next session tasks with clarified WhatsApp modal improvements
+2e2a30c - feat: Add simple reservation messages and 4-step workflow to Reserved Orders
+2553423 - fix: Show WhatsApp modal before sending messages
+c45d1e7 - feat: Implement Phase 4 WhatsApp workflow and sold-out notifications
+b8f8afb - fix: Resolve scrolling, modal bug, and mobile layout issues
 ```
 
 ### ✅ Completed Phases
@@ -578,7 +579,49 @@ fd082cc - fix: Resolve two critical Kitchen Prep bugs (Phase 1)
 
 ---
 
-#### Phase 5: Polish & Testing (Day 6.5 - 8 hours)
+#### Phase 5+: Flash Sale & Customer Discount Integration (8 hours)
+**Status**: ✅ **COMPLETE** | **Session**: December 6, 2025
+
+**Flash Sale System:**
+- ✅ Full flash sale state management in store.tsx with localStorage persistence
+- ✅ Flash sale modal in Dashboard to select items and set custom prices
+- ✅ Automatic flash sale price application to Orders page menu items
+- ✅ Visual indicators: "⚡ SALE" badge with amber/orange background
+- ✅ Strikethrough original prices showing discount value
+- ✅ Flash sale prices automatically applied to cart totals
+- ✅ Orders automatically flagged as `isFlashSale: true` when containing flash sale items
+- ✅ Flash sale expiry at end of day with auto-cleanup
+
+**Customer Discount System (Rebranded):**
+- ✅ Renamed from "Flash Sale Discount" to "👤 Customer Discount"
+- ✅ Changed color scheme from amber to blue/sky for distinction
+- ✅ Manual per-order discount application (separate from automatic flash sales)
+- ✅ Consistent strikethrough display with original price
+
+**Bug Fixes:**
+- ✅ Fixed flash sale display inconsistency where strikethrough wasn't showing
+- ✅ Fixed cart total calculation to use flash sale prices instead of original prices
+- ✅ Fixed double function calls causing state race conditions
+- ✅ Ensured 100% consistent visual display across all flash sale items
+
+**Dynamic Field Protection:**
+- ✅ WhatsApp message validation prevents sending without required placeholders
+- ✅ Confirmation dialog warns users about removed dynamic fields
+
+**UI/UX Improvements:**
+- ✅ Disabled "Save as Default" button (marked as Coming Soon) to avoid confusion
+- ✅ Improved price display layout with larger strikethrough text
+- ✅ Color-coded discount systems for user clarity
+
+**Files Modified:**
+- `store.tsx` - Added flash sale state management (+45 lines)
+- `pages/Dashboard.tsx` - Flash sale modal integration (+10 lines)
+- `pages/Orders.tsx` - Flash sale price display and cart calculation (+50 lines)
+- `components/WhatsAppSendModal.tsx` - Dynamic field validation (+35 lines)
+
+---
+
+#### Phase 6: Polish & Testing (Day 6.5 - 8 hours)
 **Status**: ⏳ **PENDING**
 
 - Cross-browser testing
@@ -590,7 +633,7 @@ fd082cc - fix: Resolve two critical Kitchen Prep bugs (Phase 1)
 
 ### 📊 Overall Progress
 
-**Completed**: 4/6 phases (67% of initial plan)
+**Completed**: 5/6 phases (83% of initial plan)
 
 | Phase | Status | Time | Priority |
 |-------|--------|------|----------|
@@ -599,9 +642,10 @@ fd082cc - fix: Resolve two critical Kitchen Prep bugs (Phase 1)
 | Phase 2: Menu Management | ✅ Complete | 5h | Medium |
 | Phase 3: Recipe System | ⏳ Pending | 10h | Medium |
 | Phase 4: Slot System | ✅ Complete | 3h | Low |
-| Phase 5: Polish & Testing | ⏳ Pending | 8h | Final |
+| Phase 5+: Flash Sale & Discounts | ✅ Complete | 8h | Critical |
+| Phase 6: Polish & Testing | ⏳ Pending | 8h | Final |
 
-**Total Time**: 13h completed / 31h total (42% done)
+**Total Time**: 21h completed / 39h total (54% done)
 
 ---
 

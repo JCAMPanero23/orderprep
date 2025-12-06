@@ -10,7 +10,7 @@ import { parseWhatsAppOrder } from '../utils/whatsappParser';
 import { generateWhatsAppReceipt, generateReservationConfirmation, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
 
 export const Orders: React.FC = () => {
-  const { menu, customers, orders, addOrder, getRemainingStock, markOrderReserved } = useAppStore();
+  const { menu, customers, orders, addOrder, getRemainingStock, markOrderReserved, getFlashSalePrice, isItemOnFlashSale } = useAppStore();
   
   // POS State
   const [customerName, setCustomerName] = useState('');
@@ -85,15 +85,42 @@ export const Orders: React.FC = () => {
 
     const finalName = customerName.trim() || 'Walk-in Customer';
 
-    const items = cart.map(c => ({
-        menuItemId: c.item.id,
-        name: c.item.name,
-        quantity: c.qty,
-        priceAtOrder: c.item.price
-    }));
+    const items = cart.map(c => {
+        // Use flash sale price if item is on flash sale, otherwise use regular price
+        const flashPrice = getFlashSalePrice(c.item.id);
+        const priceToUse = flashPrice ?? c.item.price;
 
-    const originalTotal = items.reduce((sum, i) => sum + (i.priceAtOrder * i.quantity), 0);
-    const discountAmount = isFlashSale ? flashSaleDiscount * cart.reduce((sum, c) => sum + c.qty, 0) : 0;
+        return {
+            menuItemId: c.item.id,
+            name: c.item.name,
+            quantity: c.qty,
+            priceAtOrder: priceToUse
+        };
+    });
+
+    // Check if any items in cart are flash sale items
+    const hasFlashSaleItems = cart.some(c => isItemOnFlashSale(c.item.id));
+
+    // Calculate totals
+    const finalTotal = items.reduce((sum, i) => sum + (i.priceAtOrder * i.quantity), 0);
+
+    // For flash sale items, calculate the discount from original price
+    let originalTotal = finalTotal;
+    let discountAmount = 0;
+
+    if (hasFlashSaleItems) {
+        originalTotal = cart.reduce((sum, c) => {
+            return sum + (c.item.price * c.qty);
+        }, 0);
+        discountAmount = originalTotal - finalTotal;
+    }
+
+    // Legacy manual flash sale discount (when user checks the flash sale checkbox)
+    if (isFlashSale && !hasFlashSaleItems) {
+        discountAmount = flashSaleDiscount * cart.reduce((sum, c) => sum + c.qty, 0);
+        originalTotal = finalTotal + discountAmount;
+    }
+
     const totalAmount = originalTotal - discountAmount;
 
     // Walk-in = ONLY name entered (no phone or phone is N/A)
@@ -120,9 +147,9 @@ export const Orders: React.FC = () => {
         customerPhone: customerPhone || 'N/A',
         items,
         totalAmount,
-        originalAmount: isFlashSale ? originalTotal : undefined,
-        discountAmount: isFlashSale ? discountAmount : undefined,
-        isFlashSale: isFlashSale,
+        originalAmount: (hasFlashSaleItems || isFlashSale) ? originalTotal : undefined,
+        discountAmount: (hasFlashSaleItems || isFlashSale) ? discountAmount : undefined,
+        isFlashSale: hasFlashSaleItems || isFlashSale,
         status: mode === 'reserve' ? 'reserved' : 'completed',
         paymentStatus: mode === 'payCash' ? 'paid' : 'unpaid',
         deliveryDate: new Date().toISOString(),
@@ -302,7 +329,16 @@ export const Orders: React.FC = () => {
     }
   };
 
-  const totalCart = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+  // Calculate cart total using flash sale prices when applicable
+  const totalCart = cart.reduce((sum, c) => {
+    const flashPrice = getFlashSalePrice(c.item.id);
+    const priceToUse = flashPrice ?? c.item.price;
+    return sum + (priceToUse * c.qty);
+  }, 0);
+
+  // Calculate original total (before flash sale) for displaying strikethrough
+  const originalCart = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+  const hasFlashSaleItems = cart.some(c => getFlashSalePrice(c.item.id) !== null);
 
   // Filtered customers for autocomplete
   const filteredCustomers = customers.filter(c =>
@@ -428,6 +464,11 @@ export const Orders: React.FC = () => {
                 const remaining = stock - inCart;
                 const isSoldOut = remaining <= 0;
 
+                // Get flash sale price ONCE to avoid multiple calls
+                const flashPrice = getFlashSalePrice(item.id);
+                const onFlashSale = flashPrice !== null;
+                const displayPrice = flashPrice ?? item.price;
+
                 return (
                     <button
                         key={item.id}
@@ -435,16 +476,42 @@ export const Orders: React.FC = () => {
                         className={`relative p-2 rounded-lg border text-left transition-all active:scale-95 ${
                             isSoldOut
                                 ? 'bg-red-50 border-red-200 hover:border-red-400 cursor-pointer'
+                                : onFlashSale
+                                ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-300 shadow-sm hover:border-amber-500'
                                 : 'bg-white border-slate-200 shadow-sm hover:border-sky-500'
                         }`}
                     >
+                        {/* Flash Sale Badge */}
+                        {onFlashSale && !isSoldOut && (
+                            <div className="absolute -top-2 -left-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10">
+                                ⚡ SALE
+                            </div>
+                        )}
+
                         <div className="flex justify-between items-start mb-1.5">
                             <span className={`text-xs font-bold px-2 py-1 rounded-md ${
                                 isSoldOut ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'
                             }`}>
                                 {isSoldOut ? 'SOLD' : `${remaining} left`}
                             </span>
-                            <span className="font-bold text-slate-900 text-lg">{item.price}</span>
+                            <div className="text-right min-w-[60px]">
+                                {onFlashSale && !isSoldOut ? (
+                                    // Flash Sale Price Display - ALWAYS show both prices for consistency
+                                    <>
+                                        <div className="text-base text-slate-400 line-through font-bold mb-0.5">
+                                            {item.price}
+                                        </div>
+                                        <div className="font-bold text-2xl text-amber-600">
+                                            {flashPrice}
+                                        </div>
+                                    </>
+                                ) : (
+                                    // Regular Price Display
+                                    <span className="font-bold text-lg text-slate-900">
+                                        {displayPrice}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <p className="font-bold text-slate-800 leading-tight line-clamp-2 h-10">{item.name}</p>
 
@@ -483,17 +550,17 @@ export const Orders: React.FC = () => {
                 </div>
             )}
             
-            {/* Flash Sale Toggle */}
+            {/* Customer-Specific Discount Toggle */}
             {cart.length > 0 && (
-                <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="mb-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
                             type="checkbox"
                             checked={isFlashSale}
                             onChange={(e) => setIsFlashSale(e.target.checked)}
-                            className="w-4 h-4 text-amber-600 rounded focus:ring-amber-500"
+                            className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
                         />
-                        <span className="font-bold text-amber-900 text-sm">⚡ Flash Sale Discount</span>
+                        <span className="font-bold text-sky-900 text-sm">👤 Customer Discount</span>
                     </label>
                     {isFlashSale && (
                         <div className="mt-2 flex items-center gap-2">
@@ -501,11 +568,11 @@ export const Orders: React.FC = () => {
                                 type="number"
                                 value={flashSaleDiscount}
                                 onChange={(e) => setFlashSaleDiscount(Number(e.target.value))}
-                                className="w-20 px-2 py-1 border border-amber-300 rounded text-center font-bold"
+                                className="w-20 px-2 py-1 border border-sky-300 rounded text-center font-bold"
                                 min="1"
                                 max="10"
                             />
-                            <span className="text-xs text-amber-800">AED off per item</span>
+                            <span className="text-xs text-sky-800">AED off per item</span>
                         </div>
                     )}
                 </div>
@@ -514,9 +581,9 @@ export const Orders: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-500 font-medium">{cart.reduce((a, b) => a + b.qty, 0)} items</span>
                 <div className="text-right">
-                    {isFlashSale && (
+                    {(hasFlashSaleItems || isFlashSale) && (
                         <div className="text-sm text-slate-500 line-through">
-                            {totalCart} AED
+                            {isFlashSale ? totalCart : originalCart} AED
                         </div>
                     )}
                     <span className="text-3xl font-bold text-slate-900">

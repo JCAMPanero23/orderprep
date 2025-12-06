@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Copy, Check, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const { orders, menu, getRemainingStock } = useAppStore();
+  const { orders, menu, getRemainingStock, setFlashSale } = useAppStore();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
@@ -146,6 +146,15 @@ export const Dashboard: React.FC = () => {
       alert('Please select at least one item for flash sale');
       return;
     }
+
+    // Save flash sale to store
+    const flashSaleData: { [menuItemId: string]: number } = {};
+    Object.entries(flashSaleItems).forEach(([itemId, data]) => {
+      if (data.selected) {
+        flashSaleData[itemId] = data.price;
+      }
+    });
+    setFlashSale(flashSaleData);
 
     try {
       await navigator.clipboard.writeText(generateFlashSaleMenu());
