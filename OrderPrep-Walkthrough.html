@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OrderPrep App - Complete User Walkthrough</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      line-height: 1.8;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .cover-page {
+      text-align: center;
+      padding: 100px 0;
+      margin-bottom: 100px;
+      border-bottom: 3px solid #0EA5E9;
+    }
+
+    h1 {
+      color: #0EA5E9;
+      font-size: 32px;
+      margin: 20px 0;
+      border-bottom: 3px solid #0EA5E9;
+      padding-bottom: 15px;
+    }
+
+    h2 {
+      color: #0EA5E9;
+      font-size: 24px;
+      margin: 30px 0 15px 0;
+      border-left: 4px solid #0EA5E9;
+      padding-left: 15px;
+    }
+
+    h3 {
+      color: #666;
+      font-size: 18px;
+      margin: 15px 0 10px 0;
+    }
+
+    p {
+      margin: 12px 0;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    ul, ol {
+      margin: 15px 0 15px 30px;
+    }
+
+    li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .section {
+      background: #f0f7ff;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #0EA5E9;
+      border-radius: 4px;
+    }
+
+    .tip {
+      background: #fff3cd;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #ffc107;
+      border-radius: 4px;
+    }
+
+    .warning {
+      background: #f8d7da;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #dc3545;
+      border-radius: 4px;
+    }
+
+    .feature-box {
+      background: #e8f5e9;
+      padding: 20px;
+      margin: 20px 0;
+      border-left: 4px solid #4caf50;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: white;
+    }
+
+    th {
+      background: #0EA5E9;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    .page-break {
+      page-break-after: always;
+      margin: 60px 0;
+      padding: 60px 0;
+      border-bottom: 2px dashed #ccc;
+    }
+
+    .toc {
+      background: #f0f7ff;
+      padding: 30px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .toc ol {
+      margin-left: 30px;
+      font-size: 16px;
+      line-height: 2;
+    }
+
+    .cover-page h1 {
+      font-size: 48px;
+      border: none;
+      padding: 20px 0;
+    }
+
+    .cover-page h2 {
+      font-size: 24px;
+      color: #666;
+      border: none;
+      padding: 0;
+      margin: 20px 0;
+    }
+
+    .cover-page p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    .subtitle {
+      color: #999;
+      font-size: 18px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 100px;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      color: #999;
+      font-size: 12px;
+    }
+
+    strong {
+      color: #0EA5E9;
+    }
+
+    .emoji {
+      margin-right: 5px;
+    }
+
+    @media print {
+      body { background: white; }
+      .container { box-shadow: none; }
+      .page-break { page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- COVER PAGE -->
+<div class="cover-page">
+  <h1>📱 OrderPrep App</h1>
+  <h2>Complete User Walkthrough Guide</h2>
+  <p class="subtitle">Smart Food Business Management Platform</p>
+  <p style="margin-top: 40px;">For home food entrepreneurs managing orders via WhatsApp</p>
+  <p style="color: #999; margin-top: 60px;">Version 1.0 | December 2025</p>
+  <p style="color: #999; margin-top: 30px;">📧 Email: support@orderprep.app | 🌐 www.orderprep.app</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- TABLE OF CONTENTS -->
+<h1>📑 Table of Contents</h1>
+<div class="toc">
+  <ol>
+    <li>Getting Started & Login</li>
+    <li>Dashboard Overview</li>
+    <li>Managing Orders (POS System)</li>
+    <li>Payment Tracking & Reminders</li>
+    <li>Kitchen Planning & Menu Management</li>
+    <li>Customer Analytics</li>
+    <li>Settings & Backup</li>
+    <li>Tips & Best Practices</li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 1 -->
+<h1><span class="emoji">1️⃣</span>Getting Started & Login</h1>
+
+<h2>Your First Visit</h2>
+<p><strong>Getting started with OrderPrep:</strong></p>
+<ol>
+  <li>You'll see the <strong>Welcome Screen</strong> with business setup form</li>
+  <li>Fill in your business name (e.g., "Mina's Filipino Kitchen")</li>
+  <li>Enter your email address</li>
+  <li>Enter your WhatsApp phone number (with country code)</li>
+  <li>Click <strong>"Get Started"</strong></li>
+</ol>
+
+<div class="section">
+  <h3>💡 Important Information</h3>
+  <p><strong>Business Name:</strong> Used in messages and reports</p>
+  <p><strong>Email:</strong> For backup notifications (optional)</p>
+  <p><strong>Phone:</strong> Your WhatsApp number with country code (e.g., +971 50 123 4567)</p>
+</div>
+
+<h2>Logging Back In</h2>
+<p>On your next visit, you'll see:</p>
+<ol>
+  <li>Existing business name displayed</li>
+  <li>Button to "Continue with existing business"</li>
+  <li>Or "Switch Business" to create new one</li>
+</ol>
+
+<div class="warning">
+  <strong>⚠️ Warning:</strong> Data is stored locally in your browser. Clearing browser history/cache will delete your data! Always keep backups in Settings.
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 2 -->
+<h1><span class="emoji">2️⃣</span>Dashboard Overview</h1>
+
+<h2>Home Screen Stats</h2>
+<p>Your dashboard shows real-time business metrics:</p>
+
+<table>
+  <tr>
+    <th>Metric</th>
+    <th>What It Shows</th>
+  </tr>
+  <tr>
+    <td><strong>Today's Orders</strong></td>
+    <td>Total number of orders received today</td>
+  </tr>
+  <tr>
+    <td><strong>Total Revenue (Paid)</strong></td>
+    <td>Money you've already received from customers</td>
+  </tr>
+  <tr>
+    <td><strong>Unpaid Amount</strong></td>
+    <td>Money customers still owe you (credit/pending)</td>
+  </tr>
+  <tr>
+    <td><strong>Flash Sale Impact</strong></td>
+    <td>Total revenue lost from discounts today</td>
+  </tr>
+</table>
+
+<h2>Flash Sale Quick Action</h2>
+<p>The <strong>lightning bolt (⚡)</strong> button on dashboard opens Flash Sale modal:</p>
+<ol>
+  <li>Select items to put on sale</li>
+  <li>Set custom sale price</li>
+  <li>Sale prices apply to today's orders only</li>
+  <li>Automatically expires at end of day</li>
+</ol>
+
+<div class="feature-box">
+  <h3>💰 Flash Sale Benefits</h3>
+  <p>✓ Clear old stock quickly</p>
+  <p>✓ See exactly how much discount costs you</p>
+  <p>✓ Track which items go on sale frequently</p>
+  <p>✓ Make data-driven cooking decisions</p>
+</div>
+
+<div class="section">
+  <h3>🎯 Pro Tip</h3>
+  <p>Monitor the "Flash Sale Impact" warning on dashboard. If consistently high, you're cooking too much and need to reduce quantities.</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 3 -->
+<h1><span class="emoji">3️⃣</span>Managing Orders (POS System)</h1>
+
+<h2>Quick Order Entry</h2>
+<p>The <strong>Orders</strong> tab is your POS system for recording customer purchases.</p>
+
+<h3>Step-by-Step Order Creation:</h3>
+<ol>
+  <li><strong>Select Customer:</strong> Choose from dropdown or add new customer</li>
+  <li><strong>Add Items:</strong> Click menu items to add to cart
+    <ul>
+      <li>⚡ Items on sale show strike-through price</li>
+      <li>Adjust quantity with +/- buttons</li>
+      <li>Remove items by clicking the item again</li>
+    </ul>
+  </li>
+  <li><strong>Order Notes:</strong> Add special instructions (e.g., "No onions")</li>
+  <li><strong>Apply Discount:</strong> Optional customer discount (e.g., 👤 5 AED off)</li>
+  <li><strong>Complete Order:</strong> Choose payment method:
+    <ul>
+      <li><strong>Paid Now:</strong> Customer paid immediately</li>
+      <li><strong>Pending:</strong> Payment due later (creates credit)</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>Payment Methods</h2>
+<table>
+  <tr>
+    <th>Method</th>
+    <th>When to Use</th>
+  </tr>
+  <tr>
+    <td>💵 <strong>Paid Now</strong></td>
+    <td>Customer paid cash or online transfer immediately</td>
+  </tr>
+  <tr>
+    <td>⏳ <strong>Pending</strong></td>
+    <td>Customer will pay later (creates unpaid credit)</td>
+  </tr>
+</table>
+
+<div class="tip">
+  <strong>💡 Mobile Orders from WhatsApp?</strong> Manually enter them here after customer sends message. This keeps all orders in one place for analytics.
+</div>
+
+<h2>Order History</h2>
+<p>Scroll down to see:</p>
+<ul>
+  <li>All orders from today</li>
+  <li>Customer name and order items</li>
+  <li>Order total and payment status</li>
+  <li>Delete button to remove order</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- SECTION 4 -->
+<h1><span class="emoji">4️⃣</span>Payment Tracking & Reminders</h1>
+
+<h2>Understanding Customer Risk Badges</h2>
+<p>Each unpaid customer gets a color-coded badge:</p>
+
+<table>
+  <tr>
+    <th>Badge</th>
+    <th>Meaning</th>
+    <th>Days Overdue</th>
+  </tr>
+  <tr>
+    <td>🟢 <strong>Good</strong></td>
+    <td>Customer pays on time</td>
+    <td>0 days</td>
+  </tr>
+  <tr>
+    <td>🟡 <strong>Watch</strong></td>
+    <td>Payment getting late</td>
+    <td>1-3 days</td>
+  </tr>
+  <tr>
+    <td>🔴 <strong>Risk</strong></td>
+    <td>Chronically late payer</td>
+    <td>4+ days</td>
+  </tr>
+</table>
+
+<h2>Sending Payment Reminders</h2>
+
+<h3>Process:</h3>
+<ol>
+  <li>Go to <strong>Payments</strong> tab</li>
+  <li>Find customer with unpaid amount</li>
+  <li>Click <strong>"Send Reminder"</strong> button</li>
+  <li>Choose reminder template:
+    <ul>
+      <li>👋 <strong>Friendly Reminder</strong> - First contact (polite tone)</li>
+      <li>👔 <strong>Professional Follow-up</strong> - Second attempt (formal)</li>
+      <li>⚠️ <strong>Final Notice</strong> - Last warning (firm tone)</li>
+    </ul>
+  </li>
+  <li>Preview message and customer name auto-fill</li>
+  <li>Copy to clipboard or share directly to WhatsApp</li>
+</ol>
+
+<div class="warning">
+  <strong>⚠️ Important:</strong> App shows reminder template, but YOU send it via WhatsApp. Copy the message and paste in your WhatsApp chat with customer.
+</div>
+
+<h2>Marking Payment as Received</h2>
+<ol>
+  <li>Find customer in Payments list</li>
+  <li>Click <strong>"Mark as Paid"</strong> button</li>
+  <li>Customer risk badge changes to 🟢 Good</li>
+  <li>Amount removed from "Unpaid Amount" on dashboard</li>
+</ol>
+
+<div class="feature-box">
+  <h3>📊 Payment Analytics</h3>
+  <p>The app tracks:</p>
+  <p>✓ Total amount each customer owes</p>
+  <p>✓ How many days late they are</p>
+  <p>✓ Their payment history timeline</p>
+  <p>✓ Repeat offenders (Risk badge)</p>
+</div>
+
+<div class="section">
+  <h3>💡 Strategy Tip</h3>
+  <p>Send Friendly Reminder after 1 day, Professional after 3 days, Final Notice after 5+ days. This increases payment recovery rate.</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 5 -->
+<h1><span class="emoji">5️⃣</span>Kitchen Planning & Menu Management</h1>
+
+<h2>Two Ways to Plan Your Menu</h2>
+
+<div class="tip">
+  <strong>💡 Which Mode to Choose?</strong><br>
+  <strong>Slot Mode</strong> is recommended if you have 20+ menu items. It shows only your best items for the day.<br>
+  <strong>Full Menu Mode</strong> works better for smaller menus (under 15 items).
+</div>
+
+<h3>Option 1: Slot Mode (Recommended for Large Menus)</h3>
+<p>Show only 8-15 curated slots - perfect for businesses with many items:</p>
+<ol>
+  <li>Go to <strong>Kitchen</strong> tab</li>
+  <li>Toggle to <strong>"Slot Mode"</strong> (at the top)</li>
+  <li>Choose how many slots: 8, 10, 12, or 15 items</li>
+  <li>For each slot:
+    <ul>
+      <li>Click dropdown and select which menu item</li>
+      <li>Enter quantity you plan to cook</li>
+      <li>Price auto-updates from the menu</li>
+    </ul>
+  </li>
+  <li>Click <strong>"Publish Today's Menu"</strong></li>
+  <li>Only these curated items appear to customers</li>
+</ol>
+
+<div class="section">
+  <h3>✨ Why Slot Mode is Great for Large Menus</h3>
+  <p>• Shows customers only your best/popular items</p>
+  <p>• Reduces decision paralysis (easier for customers to choose)</p>
+  <p>• Helps you plan exactly what to cook each day</p>
+  <p>• Can rotate different items daily to keep menu fresh</p>
+  <p>• Reduces waste by limiting your offerings</p>
+</div>
+
+<h3>Option 2: Full Menu Mode (For Small Menus)</h3>
+<p>Show ALL available items and their quantities:</p>
+<ol>
+  <li>Go to <strong>Kitchen</strong> tab</li>
+  <li>Make sure <strong>"Full Menu Mode"</strong> is selected</li>
+  <li>Edit quantities for each menu item:
+    <ul>
+      <li>Enter how many you plan to cook</li>
+      <li>Price auto-updates from menu</li>
+    </ul>
+  </li>
+  <li>Click <strong>"Publish Today's Menu"</strong></li>
+  <li>All items appear in Orders tab and WhatsApp menu</li>
+</ol>
+
+<h2>Adding New Menu Items</h2>
+<ol>
+  <li>Click <strong>"+ Add Menu Item"</strong> button</li>
+  <li>Fill in form:
+    <ul>
+      <li><strong>Name:</strong> Item name (e.g., "Honey Pork Ribs")</li>
+      <li><strong>Description:</strong> What's in it (e.g., "Slow cooked in honey soy sauce")</li>
+      <li><strong>Category:</strong> Main, Dessert, Snack, Beverage</li>
+      <li><strong>Price:</strong> Base selling price</li>
+    </ul>
+  </li>
+  <li>Click <strong>"Add Item"</strong></li>
+</ol>
+
+<h2>Editing Menu Items</h2>
+<ol>
+  <li>Go to <strong>"Menu List"</strong> tab</li>
+  <li>Click <strong>"Edit"</strong> button on item</li>
+  <li>Modify any field (name, price, description, category)</li>
+  <li>Click <strong>"Save Changes"</strong></li>
+</ol>
+
+<div class="feature-box">
+  <h3>🤖 AI Menu Recommendations</h3>
+  <p>After taking orders, Kitchen tab shows:</p>
+  <p>✓ <strong>COOK MORE:</strong> Popular items running low</p>
+  <p>✓ <strong>COOK LESS:</strong> Slow-moving items with leftovers</p>
+  <p>✓ <strong>MAINTAIN:</strong> Items with perfect demand</p>
+  <p>These are based on 7-day sales history!</p>
+</div>
+
+<div class="section">
+  <h3>💡 Pro Tip</h3>
+  <p>When publishing menu, check which items are running low and which have too much stock. Adjust quantities based on recommendations to reduce waste and sold-outs.</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 6 -->
+<h1><span class="emoji">6️⃣</span>Shopping List & Prep</h1>
+
+<h2>Auto-Generated Shopping List</h2>
+<p>The <strong>Prep</strong> tab automatically generates your shopping list for today:</p>
+
+<h3>How It Works:</h3>
+<ol>
+  <li>App looks at all TODAY'S ORDERS</li>
+  <li>Calculates ingredients needed based on recipes</li>
+  <li>Shows what you need to buy for today's orders</li>
+</ol>
+
+<h2>Shopping List Display</h2>
+<table>
+  <tr>
+    <th>Column</th>
+    <th>What It Means</th>
+  </tr>
+  <tr>
+    <td><strong>Have</strong></td>
+    <td>Current stock you have</td>
+  </tr>
+  <tr>
+    <td><strong>Need</strong></td>
+    <td>Total amount required for orders</td>
+  </tr>
+  <tr>
+    <td><strong>To Buy</strong></td>
+    <td>How much to purchase (Need - Have)</td>
+  </tr>
+</table>
+
+<h2>Using the Shopping List</h2>
+<ol>
+  <li>Generate list based on today's orders</li>
+  <li>Click <strong>"Copy to Clipboard"</strong> to copy formatted list</li>
+  <li>Paste into WhatsApp notes or supplier chat</li>
+  <li>Take shopping list with you or send to supplier</li>
+</ol>
+
+<div class="tip">
+  <strong>💡 Mobile Tip:</strong> Copy list to clipboard, then paste in WhatsApp or Notes app before going shopping. Easy reference while at market!
+</div>
+
+<h2>Inventory Management</h2>
+<p>In <strong>Prep</strong> tab, you can also:</p>
+<ul>
+  <li>View current stock of all ingredients</li>
+  <li>Update quantities after shopping</li>
+  <li>Set reorder levels for ingredients</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- SECTION 7 -->
+<h1><span class="emoji">7️⃣</span>Customer Analytics</h1>
+
+<h2>View All Customers</h2>
+<p>The <strong>Customers</strong> tab shows complete customer list with:</p>
+
+<ul>
+  <li>Customer name and phone number</li>
+  <li>Unit and building location</li>
+  <li>Total orders they've placed</li>
+  <li>Total amount spent (lifetime)</li>
+  <li>Risk badge (Good/Watch/Risk)</li>
+</ul>
+
+<h2>Customer Details Page</h2>
+<p>Click any customer to see detailed analysis:</p>
+
+<h3>Information Shown:</h3>
+<table>
+  <tr>
+    <th>Section</th>
+    <th>What It Shows</th>
+  </tr>
+  <tr>
+    <td><strong>Header</strong></td>
+    <td>Name, phone, location, risk badge</td>
+  </tr>
+  <tr>
+    <td><strong>Stats</strong></td>
+    <td>Total spent, total orders, unpaid amount</td>
+  </tr>
+  <tr>
+    <td><strong>Payment Timeline</strong></td>
+    <td>Visual history of their payments</td>
+  </tr>
+  <tr>
+    <td><strong>Recent Orders</strong></td>
+    <td>Last 10 orders with items and dates</td>
+  </tr>
+</table>
+
+<h2>Adding New Customer</h2>
+<ol>
+  <li>Click <strong>"+ Add Customer"</strong> button in header</li>
+  <li>Fill form:
+    <ul>
+      <li><strong>Name:</strong> Customer's name (required)</li>
+      <li><strong>Phone:</strong> WhatsApp number (required)</li>
+      <li><strong>Unit:</strong> Apartment/unit number (optional)</li>
+      <li><strong>Building/Location:</strong> Building name (optional)</li>
+    </ul>
+  </li>
+  <li>Click <strong>"Add Customer"</strong></li>
+</ol>
+
+<div class="feature-box">
+  <h3>📊 Customer Insights</h3>
+  <p>The app helps you identify:</p>
+  <p>✓ Your most loyal customers (highest spenders)</p>
+  <p>✓ Reliable vs unreliable payers</p>
+  <p>✓ Patterns in their orders</p>
+  <p>✓ Which customers to prioritize</p>
+</div>
+
+<div class="section">
+  <h3>💡 Business Strategy</h3>
+  <p>Use customer analytics to:</p>
+  <p>• Give loyalty rewards to high-value customers</p>
+  <p>• Follow up with inactive customers</p>
+  <p>• Reduce credit to Risk badge customers</p>
+  <p>• Understand your customer base better</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- SECTION 8 -->
+<h1><span class="emoji">8️⃣</span>Settings & Backup</h1>
+
+<h2>Business Settings</h2>
+<p>In <strong>Settings</strong> tab, you can:</p>
+
+<h3>Edit Business Information</h3>
+<ol>
+  <li>Update business name</li>
+  <li>Change email address</li>
+  <li>Update WhatsApp phone number</li>
+  <li>Click <strong>"Save Changes"</strong></li>
+</ol>
+
+<h2>Backup & Restore (CRITICAL!)</h2>
+
+<h3>Manual Backup (Download to Device)</h3>
+<ol>
+  <li>Click <strong>"Download Backup"</strong> button in Settings</li>
+  <li>File downloads as: <strong>orderprep-backup-[date].json</strong></li>
+  <li>Save this file safely on your computer</li>
+  <li>This is your data insurance - KEEP IT SAFE!</li>
+</ol>
+
+<div class="warning">
+  <strong>⚠️ CRITICAL:</strong> Your data lives ONLY in browser. If you clear cache, close browser tab wrong way, or format computer - ALL DATA GONE. Download backup every week!
+</div>
+
+<h3>Auto Backup (Daily)</h3>
+<p>App automatically backs up data daily:</p>
+<ul>
+  <li>Runs silently in background</li>
+  <li>No action from you needed</li>
+  <li>Provides emergency protection</li>
+</ul>
+
+<h3>Restore from Backup</h3>
+<ol>
+  <li>Click <strong>"Upload Backup"</strong> button</li>
+  <li>Select your previously downloaded JSON file</li>
+  <li>Confirm - this REPLACES all current data</li>
+  <li>Data restores completely</li>
+</ol>
+
+<div class="tip">
+  <strong>💡 Backup Strategy:</strong> Download backup every Friday evening. Keep 4 weekly backups. If something goes wrong, you can restore from last week's backup.
+</div>
+
+<h2>CSV Data Import</h2>
+<p>You can bulk import customer and menu data:</p>
+
+<h3>Import Customers</h3>
+<ol>
+  <li>Prepare CSV: Name, Phone, Unit, Floor, Building</li>
+  <li>Click <strong>"Upload Customers CSV"</strong></li>
+  <li>Choose to Add or Replace existing</li>
+</ol>
+
+<h3>Import Menu Items</h3>
+<ol>
+  <li>Prepare CSV: Name, Price, Daily Limit, Description</li>
+  <li>Click <strong>"Upload Menu CSV"</strong></li>
+  <li>Choose to Add or Replace existing</li>
+</ol>
+
+<div class="page-break"></div>
+
+<!-- SECTION 9 -->
+<h1><span class="emoji">9️⃣</span>Tips & Best Practices</h1>
+
+<h2>Daily Workflow</h2>
+
+<h3>🌅 Morning (Before Orders Start)</h3>
+<ol>
+  <li>Check Dashboard for yesterday's unpaid amounts</li>
+  <li>Send payment reminders if needed</li>
+  <li>Review Kitchen recommendations</li>
+  <li>Decide what to cook based on analytics</li>
+  <li>Publish today's menu</li>
+</ol>
+
+<h3>☀️ During Day (Taking Orders)</h3>
+<ol>
+  <li>Add each order in Orders tab immediately</li>
+  <li>Mark as "Paid" if customer pays immediately</li>
+  <li>Mark as "Pending" if paying later</li>
+  <li>Use Flash Sale for items needing to clear</li>
+</ol>
+
+<h3>🌆 Evening (End of Day)</h3>
+<ol>
+  <li>Review today's revenue on Dashboard</li>
+  <li>Check stock levels in Prep</li>
+  <li>Note which items sold well/didn't sell</li>
+  <li>Send payment reminders to pending customers</li>
+</ol>
+
+<h2>Maximizing Flash Sales</h2>
+<ul>
+  <li>Use only for items that MUST move (expiring, old stock)</li>
+  <li>Check "Flash Sale Impact" to see real cost of discounts</li>
+  <li>If spending 300+ AED/day on discounts, cook less tomorrow</li>
+  <li>Track which items repeat in flash sales - reduce cooking quantity</li>
+</ul>
+
+<h2>Improving Payment Collection</h2>
+<ul>
+  <li>Send Friendly Reminder after 1 day</li>
+  <li>Send Professional Follow-up after 3 days</li>
+  <li>Send Final Notice after 5+ days</li>
+  <li>Reduce credit to "Risk" badge customers</li>
+  <li>Offer small discount (1-2 AED) for immediate payment</li>
+</ul>
+
+<h2>Smart Menu Planning</h2>
+<ul>
+  <li>Follow "COOK MORE" recommendations for popular items</li>
+  <li>Cut quantities of "COOK LESS" items by 20-30%</li>
+  <li>This reduces waste AND sold-outs</li>
+  <li>Saves time and ingredients</li>
+</ul>
+
+<h2>Using Analytics</h2>
+<ul>
+  <li>Track customer preferences over time</li>
+  <li>Identify seasonal trends</li>
+  <li>See which customers are most valuable</li>
+  <li>Understand your revenue patterns</li>
+</ul>
+
+<div class="feature-box">
+  <h3>💰 Financial Impact (Expected)</h3>
+  <p><strong>Monthly savings with OrderPrep:</strong></p>
+  <p>✓ Payment recovery: +1,800-3,150 AED (faster collection)</p>
+  <p>✓ Waste reduction: ~50% less waste (smart planning)</p>
+  <p>✓ Time saved: 2-3 hours/day (automation)</p>
+  <p>✓ Better decisions: Data-driven menu planning</p>
+</div>
+
+<h2>Troubleshooting</h2>
+
+<h3>❓ Data Missing?</h3>
+<p><strong>Cause:</strong> Browser cache cleared, cookies deleted</p>
+<p><strong>Solution:</strong> Restore from backup file (Settings → Upload Backup)</p>
+
+<h3>❓ Can't See Orders?</h3>
+<p><strong>Cause:</strong> Wrong date selected or no orders today</p>
+<p><strong>Solution:</strong> Orders tab only shows today's orders. Check date.</p>
+
+<h3>❓ Flash Sale Price Not Showing?</h3>
+<p><strong>Cause:</strong> Menu not published after setting flash sale</p>
+<p><strong>Solution:</strong> Go to Kitchen and click "Publish Today's Menu"</p>
+
+<h3>❓ Can't Add Customer?</h3>
+<p><strong>Cause:</strong> Missing required fields (Name or Phone)</p>
+<p><strong>Solution:</strong> Make sure Name and Phone are filled in</p>
+
+<div class="warning">
+  <strong>❓ Still having issues?</strong> Check your browser's localStorage is enabled. Some privacy settings block data storage.
+</div>
+
+<div class="page-break"></div>
+
+<!-- CONCLUSION -->
+<h1>🎯 Summary</h1>
+
+<p style="font-size: 16px; line-height: 2;">OrderPrep helps you:</p>
+
+<div style="margin: 20px 0;">
+  <p>✅ <strong>Never lose a payment</strong> - Track unpaid amounts and send reminders</p>
+  <p>✅ <strong>Stop waste</strong> - Smart recommendations reduce overcooked items</p>
+  <p>✅ <strong>Cook smarter</strong> - Based on 7-day sales history</p>
+  <p>✅ <strong>Save time</strong> - Automated shopping lists and order tracking</p>
+  <p>✅ <strong>Understand customers</strong> - See who's buying what and how they pay</p>
+  <p>✅ <strong>Make better decisions</strong> - Data on every order, customer, menu item</p>
+</div>
+
+<h2>Next Steps for Your First Customer</h2>
+<ol>
+  <li><strong>Add customers</strong> to the database (use CSV or manual)</li>
+  <li><strong>Set up menu items</strong> with prices and descriptions</li>
+  <li><strong>Use Slot Mode for large menus</strong> (if you have 20+ items, show only 8-15 daily)</li>
+  <li><strong>Start entering orders</strong> as they come in via WhatsApp</li>
+  <li><strong>Download first backup</strong> immediately and keep it safe</li>
+  <li><strong>Download backup weekly</strong> to protect your business data</li>
+  <li><strong>Monitor analytics</strong> to improve decisions week by week</li>
+</ol>
+
+<div class="tip">
+  <strong>🎯 Pro Setup Tip for First Customer:</strong><br>
+  Since your first customer has many menu items (48 items!), <strong>use Slot Mode</strong> in the Kitchen tab. This lets them show only 10-15 of their best items per day, which helps customers choose faster and reduces waste. They can rotate different items daily to keep the menu fresh while keeping customer decisions simple.
+</div>
+
+<div class="section">
+  <h3>📞 Support & Resources</h3>
+  <p>If you have questions or need help:</p>
+  <p>• Check this guide first (most answers are here)</p>
+  <p>• Review the Troubleshooting section for common issues</p>
+  <p>• Keep your data backed up always</p>
+  <p>• Contact support if needed</p>
+</div>
+
+<div class="footer">
+  <p>OrderPrep v1.0 | Smart Business Management Platform</p>
+  <p>© 2025 All Rights Reserved</p>
+  <p style="margin-top: 10px;">📧 support@orderprep.app | 🌐 www.orderprep.app</p>
+</div>
+
+</div>
+
+<script>
+  // Help message: To save as PDF: Press Ctrl+P (or Cmd+P on Mac) and select "Save as PDF"
+</script>
+
+</body>
+</html>
