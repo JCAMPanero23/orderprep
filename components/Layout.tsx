@@ -15,8 +15,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/', icon: LayoutDashboard, label: 'Home' },
     { path: '/orders', icon: ShoppingBag, label: 'Orders' },
     { path: '/reserved', icon: Clock, label: 'Reserved' },
-    { path: '/kitchen', icon: ChefHat, label: 'Kitchen' },
     { path: '/payments', icon: Wallet, label: 'Payments' },
+    { path: '/kitchen', icon: ChefHat, label: 'Kitchen' },
     { path: '/customers', icon: Users, label: 'Customers' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];

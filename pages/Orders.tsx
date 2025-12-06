@@ -137,6 +137,20 @@ export const Orders: React.FC = () => {
 
     addOrder(newOrder);
 
+    // Skip WhatsApp workflow for walk-in customers
+    if (isWalkInOrder) {
+      // For walk-in customers, just clear the cart and form immediately
+      setCart([]);
+      setCustomerName('');
+      setCustomerPhone('');
+      setCustomerUnit('');
+      setCustomerBuilding('');
+      setSelectedCustomer(null);
+      setIsFlashSale(false);
+      setFlashSaleDiscount(5);
+      return;
+    }
+
     // Generate WhatsApp confirmation message
     // Use simple message for reservations, full receipt for completed orders
     const message = mode === 'reserve'

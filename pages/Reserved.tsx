@@ -77,6 +77,15 @@ export const Reserved: React.FC = () => {
 
   // Hand Over handlers
   const handleHandOverPaidCash = (order: Order) => {
+    // Disable WhatsApp workflow for walk-in customers
+    if (order.isWalkIn) {
+      alert('WhatsApp receipts are only available for registered customers');
+      // Just complete the order without WhatsApp
+      markOrderHandedOver(order.id);
+      updateOrder(order.id, { paymentStatus: 'paid', paymentDate: new Date().toISOString() });
+      return;
+    }
+
     const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
     if (!phone) {
       alert('No phone number available for this customer');
@@ -101,6 +110,14 @@ export const Reserved: React.FC = () => {
   };
 
   const handleHandOverPayLater = (order: Order) => {
+    // Disable WhatsApp workflow for walk-in customers
+    if (order.isWalkIn) {
+      alert('WhatsApp messages are only available for registered customers');
+      // Just complete the order without WhatsApp
+      markOrderHandedOver(order.id);
+      return;
+    }
+
     const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
     if (!phone) {
       alert('No phone number available for this customer');

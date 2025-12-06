@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Modal, Input } from '../components/UI';
+import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
 import { Check, MessageCircle, Clock, Search, Copy, Send, Eye, UserPlus } from 'lucide-react';
 import { Order, Customer } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
@@ -18,6 +19,13 @@ export const Payments: React.FC = () => {
   // Preview Order Modal State
   const [previewOrder, setPreviewOrder] = useState<Order | null>(null);
 
+  // WhatsApp Send Modal State (for Mark Paid)
+  const [whatsappSendModalOpen, setWhatsappSendModalOpen] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+  const [whatsappCustomerPhone, setWhatsappCustomerPhone] = useState('');
+  const [whatsappCustomerName, setWhatsappCustomerName] = useState('');
+  const [pendingMarkPaidOrder, setPendingMarkPaidOrder] = useState<Order | null>(null);
+
   // Convert to Customer Modal State
   const [convertOrder, setConvertOrder] = useState<Order | null>(null);
   const [convertForm, setConvertForm] = useState({
@@ -30,6 +38,7 @@ export const Payments: React.FC = () => {
   });
 
   const filteredOrders = orders
+    .filter(o => o.status !== 'cancelled') // Exclude cancelled orders from all views
     .filter(o => {
       if (activeTab === 'unpaid') return o.paymentStatus !== 'paid';
       if (activeTab === 'paid') return o.paymentStatus === 'paid';
@@ -45,22 +54,34 @@ export const Payments: React.FC = () => {
   const handleMarkPaid = (order: Order) => {
       if (window.confirm(`Mark ${order.totalAmount} AED as PAID from ${order.customerName}?`)) {
           markOrderPaid(order.id);
-          // Auto trigger receipt offer?
+          // Show WhatsApp receipt modal if customer has phone number
           if (order.customerPhone !== 'N/A') {
-              const sendReceipt = window.confirm("Send payment receipt via WhatsApp?");
-              if (sendReceipt) {
-                  const msg = `Hi ${order.customerName}! Payment of ${order.totalAmount} AED received with thanks! ✅`;
-                  window.open(`https://wa.me/${order.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-              }
+              const receiptMsg = `Hi ${order.customerName}! Payment of ${order.totalAmount} AED received with thanks! ✅`;
+              setWhatsappMessage(receiptMsg);
+              setWhatsappCustomerPhone(order.customerPhone);
+              setWhatsappCustomerName(order.customerName);
+              setPendingMarkPaidOrder(order);
+              setWhatsappSendModalOpen(true);
           }
       }
   };
 
+  // Handle WhatsApp send confirmation for Mark Paid
+  const handleWhatsAppMarkPaidConfirmed = () => {
+    setPendingMarkPaidOrder(null);
+    setWhatsappMessage('');
+    setWhatsappCustomerPhone('');
+    setWhatsappCustomerName('');
+  };
+
   const sendWhatsApp = (message: string) => {
     if (!selectedOrder) return;
-    const encoded = encodeURIComponent(message);
-    window.open(`https://wa.me/${selectedOrder.customerPhone}?text=${encoded}`, '_blank');
+    setWhatsappMessage(message);
+    setWhatsappCustomerPhone(selectedOrder.customerPhone);
+    setWhatsappCustomerName(selectedOrder.customerName);
+    setPendingMarkPaidOrder(selectedOrder);
     setShowReminderModal(false);
+    setWhatsappSendModalOpen(true);
   };
 
   const handleConvertToCustomer = (order: Order) => {
@@ -245,12 +266,6 @@ export const Payments: React.FC = () => {
                                         <div className="flex-1 bg-green-50 text-green-700 text-center py-1.5 rounded-lg text-sm font-medium border border-green-100 flex items-center justify-center gap-1">
                                             <Check size={14} /> Paid
                                         </div>
-                                        <Button size="sm" variant="outline" className="border-green-200 text-green-700 bg-green-50" onClick={() => {
-                                            const msg = `Hi ${order.customerName}! Payment of ${order.totalAmount} AED received with thanks! ✅`;
-                                            window.open(`https://wa.me/${order.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-                                        }}>
-                                            <Send size={14} /> Receipt
-                                        </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -462,6 +477,19 @@ export const Payments: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* WhatsApp Send Modal (for Mark Paid) */}
+      <WhatsAppSendModal
+        isOpen={whatsappSendModalOpen}
+        onClose={() => {
+          setWhatsappSendModalOpen(false);
+          handleWhatsAppMarkPaidConfirmed();
+        }}
+        message={whatsappMessage}
+        customerPhone={whatsappCustomerPhone}
+        customerName={whatsappCustomerName}
+        onConfirmSent={handleWhatsAppMarkPaidConfirmed}
+      />
     </div>
   );
 };

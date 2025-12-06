@@ -49,10 +49,27 @@ export const Dashboard: React.FC = () => {
     return text;
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generateWhatsAppMenu());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generateWhatsAppMenu());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for older browsers or when clipboard API is not available
+      const text = generateWhatsAppMenu();
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (fallbackErr) {
+        alert('Failed to copy. Please try again.');
+      }
+      document.body.removeChild(textarea);
+    }
   };
 
   return (
@@ -106,15 +123,26 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Start Selling Button */}
-      <Button 
-        fullWidth 
-        size="lg" 
-        className="py-4 text-lg shadow-lg shadow-sky-200"
-        onClick={() => navigate('/orders')}
-      >
-        <ShoppingBag className="mr-2" /> Open Quick Sell
-      </Button>
+      {/* 2. Action Buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          fullWidth
+          size="lg"
+          className="py-4 text-base shadow-lg shadow-sky-200"
+          onClick={() => navigate('/orders')}
+        >
+          <ShoppingBag size={18} className="mr-1" /> Quick Sell
+        </Button>
+        <Button
+          fullWidth
+          size="lg"
+          className="py-4 text-base bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-200"
+          onClick={() => navigate('/orders')}
+          title="Create a flash sale offer to clear inventory"
+        >
+          <Zap size={18} className="mr-1" /> Flash Sale
+        </Button>
+      </div>
 
       {/* 3. Live Inventory */}
       <div>

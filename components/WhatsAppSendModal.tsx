@@ -77,8 +77,8 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
       {!waitingForConfirmation ? (
         // Step 1: Message Preview & Edit
         <div className="space-y-4">
-          {/* Template Selector */}
-          {availableTemplates && onTemplateChange && (
+          {/* Template Selector or Overwrite Message */}
+          {availableTemplates && onTemplateChange ? (
             <div>
               {showTemplateSelector ? (
                 <div className="space-y-2">
@@ -130,6 +130,18 @@ export const WhatsAppSendModal: React.FC<WhatsAppSendModalProps> = ({
                   </Button>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-bold text-sm text-slate-900">Message</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditableMessage(editableMessage)}
+                title="You can freely edit this message"
+              >
+                <Edit size={14} /> Overwrite Default
+              </Button>
             </div>
           )}
 
