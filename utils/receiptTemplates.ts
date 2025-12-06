@@ -79,6 +79,25 @@ export const generateWhatsAppReceipt = (
   return message;
 };
 
+// Generate simple reservation confirmation
+export const generateReservationConfirmation = (
+  order: Order
+): string => {
+  const itemsList = order.items
+    .map(item => `• ${item.quantity}x ${item.name}`)
+    .join('\n');
+
+  return `Hi ${order.customerName}! 👋
+
+Order confirmed! Thanks! 🎉
+
+${itemsList}
+
+*Total: ${order.totalAmount} AED*
+
+See you soon! 😊`;
+};
+
 // Generate sold-out apology message with alternative menu
 export const generateSoldOutMessage = (
   order: Order,

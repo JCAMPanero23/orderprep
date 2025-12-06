@@ -7,7 +7,7 @@ import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone, Check } from 'luc
 import { Order, MenuItem, Customer, ParsedOrderResult } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
 import { parseWhatsAppOrder } from '../utils/whatsappParser';
-import { generateWhatsAppReceipt, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
+import { generateWhatsAppReceipt, generateReservationConfirmation, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
 
 export const Orders: React.FC = () => {
   const { menu, customers, orders, addOrder, getRemainingStock, markOrderReserved } = useAppStore();
@@ -138,7 +138,11 @@ export const Orders: React.FC = () => {
     addOrder(newOrder);
 
     // Generate WhatsApp confirmation message
-    const message = generateWhatsAppReceipt(newOrder, undefined, selectedTemplateId);
+    // Use simple message for reservations, full receipt for completed orders
+    const message = mode === 'reserve'
+      ? generateReservationConfirmation(newOrder)
+      : generateWhatsAppReceipt(newOrder, undefined, selectedTemplateId);
+
     setOrderConfirmationMessage(message);
     setPendingOrderAction({
       order: newOrder,
@@ -401,7 +405,7 @@ export const Orders: React.FC = () => {
       </div>
 
       {/* 4. Menu Grid */}
-      <div>
+      <div className="mb-80">
         <h2 className="font-bold text-slate-800 mb-1 text-sm">Today's Menu Items</h2>
         <div className="grid grid-cols-2 gap-2">
             {availableMenu.map(item => {
@@ -741,9 +745,9 @@ export const Orders: React.FC = () => {
         customerPhone={customerPhone}
         customerName={customerName || 'Customer'}
         onConfirmSent={handleWhatsAppSendConfirmed}
-        onTemplateChange={!isSoldOutMessage ? handleTemplateChange : undefined}
-        availableTemplates={!isSoldOutMessage ? RECEIPT_TEMPLATES : undefined}
-        currentTemplateId={!isSoldOutMessage ? selectedTemplateId : undefined}
+        onTemplateChange={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? handleTemplateChange : undefined}
+        availableTemplates={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? RECEIPT_TEMPLATES : undefined}
+        currentTemplateId={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? selectedTemplateId : undefined}
       />
     </div>
   );

@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Button, Modal } from '../components/UI';
+import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
 import { MapPin, CheckCircle, XCircle, ArrowUpDown, DollarSign, ClockIcon } from 'lucide-react';
 import { Order, SortOption } from '../types';
-import { generateWhatsAppReceipt } from '../utils/receiptTemplates';
+import { generateWhatsAppReceipt, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
 
 export const Reserved: React.FC = () => {
   const { customers, orders, updateOrder, markOrderHandedOver, cancelOrderWithReason } = useAppStore();
@@ -14,6 +15,17 @@ export const Reserved: React.FC = () => {
 
   // Hand Over Modal State
   const [handOverModalOrder, setHandOverModalOrder] = useState<Order | null>(null);
+
+  // WhatsApp Send Modal State
+  const [whatsappSendModalOpen, setWhatsappSendModalOpen] = useState(false);
+  const [whatsappMessage, setWhatsappMessage] = useState('');
+  const [whatsappCustomerPhone, setWhatsappCustomerPhone] = useState('');
+  const [whatsappCustomerName, setWhatsappCustomerName] = useState('');
+  const [pendingHandOverAction, setPendingHandOverAction] = useState<{
+    order: Order;
+    isPaid: boolean;
+  } | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('friendly');
 
   // Sorting utility function
   const sortReservedOrders = (orders: Order[], sortOption: SortOption): Order[] => {
@@ -65,46 +77,74 @@ export const Reserved: React.FC = () => {
 
   // Hand Over handlers
   const handleHandOverPaidCash = (order: Order) => {
+    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
+    if (!phone) {
+      alert('No phone number available for this customer');
+      return;
+    }
+
     // Mark as completed and paid
     markOrderHandedOver(order.id);
     updateOrder(order.id, { paymentStatus: 'paid', paymentDate: new Date().toISOString() });
 
-    // Generate receipt and send via WhatsApp
+    // Generate receipt
     const customer = customers.find(c => c.id === order.customerId);
-    const receipt = generateWhatsAppReceipt(order, customer, 'casual-friendly');
+    const receipt = generateWhatsAppReceipt(order, customer, selectedTemplateId);
 
-    // Direct WhatsApp link
-    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
-    if (phone) {
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(receipt)}`, '_blank');
-    } else {
-      alert('No phone number available for this customer');
-    }
-
+    // Show WhatsApp modal
+    setWhatsappMessage(receipt);
+    setWhatsappCustomerPhone(phone);
+    setWhatsappCustomerName(order.customerName);
+    setPendingHandOverAction({ order, isPaid: true });
     setHandOverModalOrder(null);
+    setWhatsappSendModalOpen(true);
   };
 
   const handleHandOverPayLater = (order: Order) => {
+    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
+    if (!phone) {
+      alert('No phone number available for this customer');
+      return;
+    }
+
     // Mark as completed but unpaid
     markOrderHandedOver(order.id);
 
     // Generate thank you message with payment reminder
-    const customer = customers.find(c => c.id === order.customerId);
     const itemsList = order.items
       .map(item => `• ${item.quantity}x ${item.name} - ${item.priceAtOrder * item.quantity} AED`)
       .join('\n');
 
     const message = `Hi ${order.customerName}! 👋\n\nThanks for your order today! 🙏\n\n📦 Your Order:\n${itemsList}\n\n💰 Total: ${order.totalAmount} AED\n⏳ Payment: Pending\n\nPlease send payment when convenient. Thank you! 😊`;
 
-    // Direct WhatsApp link
-    const phone = order.customerPhone === 'N/A' ? '' : order.customerPhone;
-    if (phone) {
-      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-    } else {
-      alert('No phone number available for this customer');
-    }
-
+    // Show WhatsApp modal
+    setWhatsappMessage(message);
+    setWhatsappCustomerPhone(phone);
+    setWhatsappCustomerName(order.customerName);
+    setPendingHandOverAction({ order, isPaid: false });
     setHandOverModalOrder(null);
+    setWhatsappSendModalOpen(true);
+  };
+
+  // WhatsApp send confirmation callback
+  const handleWhatsAppSendConfirmed = () => {
+    setPendingHandOverAction(null);
+  };
+
+  // Template change callback
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+
+    // Regenerate message with new template
+    if (pendingHandOverAction && pendingHandOverAction.isPaid) {
+      const customer = customers.find(c => c.id === pendingHandOverAction.order.customerId);
+      const receipt = generateWhatsAppReceipt(
+        pendingHandOverAction.order,
+        customer,
+        templateId
+      );
+      setWhatsappMessage(receipt);
+    }
   };
 
   return (
@@ -276,6 +316,19 @@ export const Reserved: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* WhatsApp Send Modal */}
+      <WhatsAppSendModal
+        isOpen={whatsappSendModalOpen}
+        onClose={() => setWhatsappSendModalOpen(false)}
+        message={whatsappMessage}
+        customerPhone={whatsappCustomerPhone}
+        customerName={whatsappCustomerName}
+        onConfirmSent={handleWhatsAppSendConfirmed}
+        onTemplateChange={pendingHandOverAction?.isPaid ? handleTemplateChange : undefined}
+        availableTemplates={pendingHandOverAction?.isPaid ? RECEIPT_TEMPLATES : undefined}
+        currentTemplateId={pendingHandOverAction?.isPaid ? selectedTemplateId : undefined}
+      />
     </div>
   );
 };
