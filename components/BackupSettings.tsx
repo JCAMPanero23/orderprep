@@ -104,25 +104,7 @@ export function BackupSettings() {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <button
-          onClick={handleManualBackup}
-          disabled={isBackingUp}
-          className="bg-sky-600 hover:bg-sky-700 disabled:bg-slate-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-        >
-          {isBackingUp ? (
-            <>
-              <Loader className="animate-spin" size={20} />
-              Backing up...
-            </>
-          ) : (
-            <>
-              <Download size={20} />
-              Download Backup Now
-            </>
-          )}
-        </button>
-
+      <div className="grid grid-cols-1 gap-4 mb-6">
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isRestoring}
@@ -157,19 +139,14 @@ export function BackupSettings() {
           <div className="flex-1 text-sm text-slate-700">
             <p className="font-semibold mb-2">Privacy & Security</p>
             <p className="mb-2">
-              Your data is automatically backed up daily to your device <strong>and</strong> sent to our developer for support purposes only.
+              Your data is stored locally on your device only. We never access or store your data on our servers.
             </p>
             <ul className="list-disc list-inside space-y-1 text-slate-600">
-              <li>Backups are encrypted during transmission</li>
-              <li>We never share your data with third parties</li>
-              <li>Developer backups are kept for 90 days</li>
-              <li>You can request deletion anytime</li>
+              <li>All data stays on your device (browser storage)</li>
+              <li>No data is sent to external servers</li>
+              <li>You have complete control of your information</li>
+              <li>Backups are stored in your Downloads folder only</li>
             </ul>
-            <p className="mt-3">
-              <a href="/privacy" className="text-sky-600 hover:text-sky-800 font-semibold underline">
-                View Full Privacy Policy →
-              </a>
-            </p>
           </div>
         </div>
       </div>
