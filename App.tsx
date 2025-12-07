@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider } from './store';
 import { AuthProvider, useAuth } from './AuthContext';
-import { initAutoBackup } from './utils/backupSystem';
 import { Layout } from './components/Layout';
 import { IntroScreens } from './components/IntroScreens';
 import { SignUpForm } from './components/SignUpForm';
@@ -30,11 +29,11 @@ function AppContent() {
     }
   }, [authState.isAuthenticated]);
 
-  // Initialize auto-backup once authenticated
+  // Auto-backup disabled for privacy concerns
   useEffect(() => {
     if (authState.isAuthenticated) {
       console.log('🚀 OrderPrep app started - user authenticated');
-      initAutoBackup();
+      // Automatic backups removed to protect user privacy
     }
   }, [authState.isAuthenticated]);
 
