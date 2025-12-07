@@ -701,7 +701,7 @@ export const Kitchen: React.FC = () => {
                           <select
                               value={selectedPresetId || ''}
                               onChange={(e) => setSelectedPresetId(e.target.value || null)}
-                              className="max-w-xs border border-cyan-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                              className="w-48 border border-cyan-300 rounded-lg px-3 py-2 text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                           >
                               <option value="">Select a preset...</option>
                               {filteredPresets.map(preset => {
@@ -903,7 +903,7 @@ export const Kitchen: React.FC = () => {
                                               <select
                                                   value={slot.menuItemId || ''}
                                                   onChange={(e) => handleSlotChange(index, 'menuItemId', e.target.value)}
-                                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-medium"
+                                                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-base font-medium"
                                               >
                                                   <option value="">-- Select Item --</option>
                                                   {menu.map(item => (
