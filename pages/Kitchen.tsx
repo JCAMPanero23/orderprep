@@ -918,7 +918,7 @@ export const Kitchen: React.FC = () => {
                                           </div>
 
                                           {/* Quantity Input */}
-                                          <div className="w-20">
+                                          <div className="w-16 md:w-20 mt-6 md:mt-0">
                                               <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Qty</label>
                                               <input
                                                   type="text"
@@ -935,7 +935,7 @@ export const Kitchen: React.FC = () => {
                                           </div>
 
                                           {/* Price Input */}
-                                          <div className="w-20">
+                                          <div className="w-16 md:w-20 mt-6 md:mt-0">
                                               <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Price</label>
                                               <input
                                                   type="text"
