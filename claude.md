@@ -681,3 +681,5 @@ OrderPrep is a complete, production-ready PWA that solves real problems for home
 **Author:** Enhanced with Claude Code
 **Repository:** https://github.com/JCAMPanero23/orderprep
 - to memorize
+- to memorize
+- to memorize

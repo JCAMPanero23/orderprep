@@ -1,3 +1,11 @@
 EmailJS OrderPrep BackUp
-
 service_dmw4l3z
+Public Key
+-dthRAWA27MSeaSwZ
+
+
+Email Templates
+Jcamp Besti Food OrderPrep Backup
+template_q3bt19f
+
+
