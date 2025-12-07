@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Initialize Google Sign-In
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: '287714167858-1ek2gbdl7sqrb36h9vvhdfk6f7ugagfr.apps.googleusercontent.com', // Replace with your Google Client ID
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
           callback: handleGoogleCallback,
           auto_select: false,
         });
