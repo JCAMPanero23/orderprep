@@ -649,12 +649,14 @@
       display: flex;
       align-items: center;
       gap: 2rem;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 1rem 2rem;
       border-radius: 50px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
+      z-index: 9999;
+      -webkit-transform: translateX(-50%);
     }
 
     #controls button {
@@ -670,6 +672,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      -webkit-appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     #controls button:hover {
@@ -743,12 +748,19 @@
       }
 
       .slide {
-        padding: max(2rem, var(--safe-area-inset-top)) max(1.25rem, var(--safe-area-inset-right)) max(7rem, var(--safe-area-inset-bottom)) max(1.25rem, var(--safe-area-inset-left));
+        padding: max(2rem, env(safe-area-inset-top, 2rem)) max(1.25rem, env(safe-area-inset-right, 1.25rem)) 6rem max(1.25rem, env(safe-area-inset-left, 1.25rem));
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         justify-content: flex-start;
         height: 100vh;
         height: -webkit-fill-available;
+      }
+
+      /* iOS specific slide padding */
+      @supports (-webkit-touch-callout: none) {
+        .slide {
+          padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)) !important;
+        }
       }
 
       /* Larger touch targets for iOS */
@@ -894,6 +906,11 @@
 
       .roi-slide > p {
         font-size: 1.1rem !important;
+      }
+
+      .roi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
       }
 
       .roi-stat {
@@ -1095,9 +1112,21 @@
 
       /* Controls mobile - iPhone safe area */
       #controls {
-        bottom: max(1.25rem, calc(var(--safe-area-inset-bottom) + 0.5rem));
+        bottom: env(safe-area-inset-bottom, 20px);
         padding: 1rem 1.75rem;
         gap: 1.75rem;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.15);
+        margin-bottom: 0.5rem;
+      }
+
+      /* Ensure controls are always visible on iOS */
+      @supports (-webkit-touch-callout: none) {
+        #controls {
+          bottom: max(0.5rem, env(safe-area-inset-bottom, 20px));
+          position: fixed;
+          -webkit-transform: translateX(-50%);
+        }
       }
 
       #controls button {
@@ -1105,6 +1134,15 @@
         height: 48px;
         font-size: 1.4rem;
         flex-shrink: 0;
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      /* iOS Safari specific button fix */
+      @supports (-webkit-touch-callout: none) {
+        #controls button {
+          -webkit-appearance: button;
+        }
       }
 
       #counter {
@@ -1183,8 +1221,8 @@
       <div class="badge">🎯 FOUNDING CUSTOMER #1</div>
       <h1>Welcome to an Exclusive Partnership</h1>
       <p class="subtitle">A Once-in-a-Lifetime Opportunity</p>
-      <p style="max-width: 600px; opacity: 0.9; line-height: 1.6;">You're about to become the first beta customer of OrderPrep Business Tier. This proposal outlines an exceptional deal that will never be offered again.</p>
-      <button class="cta-button" onclick="nextSlide()">Tap to Begin →</button>
+      <p style="max-width: 600px; opacity: 0.9; line-height: 1.6;">You're about to become the first beta customer of OrderPrep Pro Tier. This proposal outlines an exceptional deal that will never be offered again.</p>
+      <button class="cta-button">Tap to Begin →</button>
     </section>
 
     <!-- Slide 2: Pain Points -->
@@ -1194,12 +1232,12 @@
         <div class="pain-card">
           <div class="emoji">💸</div>
           <h3>Payment Tracking Crisis</h3>
-          <p>Manual tracking of unpaid orders, customer credit, endless reminder follow-ups. <strong>2,000-3,000 AED lost monthly</strong>.</p>
+          <p>50% of customers have unpaid credit. Manual tracking, endless reminders, ghosting customers. <strong>300-500 AED lost monthly</strong>.</p>
         </div>
         <div class="pain-card">
-          <div class="emoji">⚡</div>
-          <h3>Flash Sale Margin Erosion</h3>
-          <p>Discounts eating into profits without ROI tracking. <strong>1,000-1,500 AED lost monthly</strong>.</p>
+          <div class="emoji">🛒</div>
+          <h3>Repeated Delivery Fees</h3>
+          <p>Forgetting ingredients daily means paying 7 AED delivery repeatedly. <strong>100-150 AED wasted monthly</strong>.</p>
         </div>
         <div class="pain-card">
           <div class="emoji">⏰</div>
@@ -1207,9 +1245,9 @@
           <p>2-3 hours daily entering WhatsApp orders one by one. <strong>75 hours wasted monthly</strong>.</p>
         </div>
         <div class="pain-card">
-          <div class="emoji">🚫</div>
-          <h3>Growth Bottleneck</h3>
-          <p>Current systems can't scale to 100+ orders/day. <strong>Revenue ceiling reached</strong>.</p>
+          <div class="emoji">🧠</div>
+          <h3>Food Waste & Guesswork</h3>
+          <p>No data on what to cook tomorrow. Overproduction leads to waste. <strong>100-200 AED lost monthly</strong>.</p>
         </div>
       </div>
     </section>
@@ -1218,54 +1256,59 @@
     <section class="slide numbers-slide" data-slide="3">
       <h2>The Numbers Don't Lie</h2>
       <p class="loss-label">Current Monthly Losses:</p>
-      <div class="loss-amount">4,060 - 6,200 AED</div>
-      <p style="font-size: 1.3rem; max-width: 600px; opacity: 0.9;">Every month, your business is hemorrhaging thousands of AED through unpaid orders, untracked discounts, wasted groceries, and manual labor.</p>
-      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #fbbf24;">That's up to <span style="font-size: 2rem;">74,400 AED per year</span> bleeding out.</p>
+      <div class="loss-amount">550 - 950 AED</div>
+      <p style="font-size: 1.3rem; max-width: 600px; opacity: 0.9;">Every month, your business is losing money through unpaid orders, repeated delivery fees, wasted groceries, and manual labor.</p>
+      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #fbbf24;">That's up to <span style="font-size: 2rem;">11,400 AED per year</span> in preventable losses.</p>
     </section>
 
     <!-- Slide 4: Solution -->
     <section class="slide solution-slide" data-slide="4">
-      <h2>Introducing OrderPrep Business Tier</h2>
-      <p style="font-size: 1.3rem; margin-bottom: 3rem; opacity: 0.9;">Built specifically for businesses like yours</p>
+      <h2>Introducing OrderPrep Pro Tier</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 3rem; opacity: 0.9;">With ALL features unlocked - including future Business Tier additions</p>
       <div class="features-grid">
         <div class="feature-card" style="animation-delay: 0.1s;">
           <div class="emoji">💰</div>
           <h3>Advanced Payment Tracking</h3>
-          <p>3 reminder templates, credit history, risk indicators</p>
+          <p>3 reminder templates, credit history, risk indicators - <strong>SAVES 300-500 AED/month</strong></p>
         </div>
         <div class="feature-card" style="animation-delay: 0.2s;">
-          <div class="emoji">⚡</div>
-          <h3>Flash Sale Management</h3>
-          <p>Revenue loss tracking, discount analytics</p>
+          <div class="emoji">🛒</div>
+          <h3>Shopping List Generator</h3>
+          <p><strong>Coming Soon:</strong> Auto-prevents repeated delivery fees - <strong>SAVES 100-150 AED/month</strong></p>
         </div>
         <div class="feature-card" style="animation-delay: 0.3s;">
-          <div class="emoji">👥</div>
-          <h3>Multi-User Access</h3>
-          <p>Scale operations with your team</p>
+          <div class="emoji">🧠</div>
+          <h3>Smart Menu Planner</h3>
+          <p>AI-powered cook more/less recommendations - <strong>REDUCES waste 100-200 AED/month</strong></p>
         </div>
         <div class="feature-card" style="animation-delay: 0.4s;">
-          <div class="emoji">📊</div>
-          <h3>Financial Reports</h3>
-          <p>Deep analytics and insights</p>
+          <div class="emoji">⚡</div>
+          <h3>Flash Sale Management</h3>
+          <p>Track discount impact and frequency - <strong>SAVES 50-100 AED/month</strong></p>
         </div>
         <div class="feature-card" style="animation-delay: 0.5s;">
-          <div class="emoji">🧾</div>
-          <h3>Recipe Costing</h3>
-          <p>Inventory management and costing</p>
+          <div class="emoji">📊</div>
+          <h3>Customer Analytics</h3>
+          <p>Payment behavior, order patterns, lifetime value</p>
         </div>
         <div class="feature-card" style="animation-delay: 0.6s;">
+          <div class="emoji">📈</div>
+          <h3>Business Financial Analytics</h3>
+          <p><strong>Coming Soon:</strong> Revenue trends, profit margins, cash flow forecasting</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.7s;">
           <div class="emoji">🎯</div>
-          <h3>Priority Support</h3>
-          <p>Direct access to development team</p>
+          <h3>Future-Proof Access</h3>
+          <p>Get Business Tier features as they launch - at founder pricing</p>
         </div>
       </div>
     </section>
 
     <!-- Slide 5: Buyer Link Bonus -->
     <section class="slide bonus-slide" data-slide="5">
-      <div class="bonus-badge">🎁 EXCLUSIVE BETA BONUS</div>
+      <div class="bonus-badge">🚀 COMING SOON</div>
       <h2 style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem;">Buyer Link System</h2>
-      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Early Access Feature - Only for Founding Customers</p>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Exclusive Feature - Priority Access for Founding Customers</p>
 
       <div class="comparison">
         <div class="comparison-card before">
@@ -1286,56 +1329,78 @@
     <!-- Slide 6: ROI Calculator -->
     <section class="slide roi-slide" data-slide="6">
       <h2>Return on Investment</h2>
-      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Conservative estimates based on your business</p>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Conservative estimates based on your actual business</p>
 
-      <div class="roi-grid">
-        <div class="roi-stat">
-          <div class="label">Monthly Benefit</div>
-          <div class="amount">2,926 - 4,680 AED</div>
+      <div class="roi-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="roi-stat" style="background: rgba(16, 185, 129, 0.1);">
+          <div class="label">💰 Payment Tracking (Primary)</div>
+          <div class="amount" style="font-size: 1.8rem;">300 - 500 AED/mo</div>
         </div>
-        <div class="roi-stat">
-          <div class="label">Year 1 Net Benefit</div>
-          <div class="amount">33,316 - 55,264 AED</div>
+        <div class="roi-stat" style="background: rgba(99, 102, 241, 0.1);">
+          <div class="label">🛒 Delivery Savings (Coming Soon)</div>
+          <div class="amount" style="font-size: 1.8rem;">100 - 150 AED/mo</div>
         </div>
-        <div class="roi-stat">
-          <div class="label">Your Investment (Year 1)</div>
-          <div class="amount" style="font-size: 2rem;">895.50 AED</div>
+        <div class="roi-stat" style="background: rgba(99, 102, 241, 0.1);">
+          <div class="label">🧠 Waste + Flash Sales</div>
+          <div class="amount" style="font-size: 1.8rem;">150 - 300 AED/mo</div>
+        </div>
+        <div class="roi-stat" style="background: rgba(245, 158, 11, 0.2); grid-column: 1 / -1;">
+          <div class="label">📊 Total Monthly Savings</div>
+          <div class="amount" style="color: #fef3c7; font-size: 3rem;">550 - 950 AED</div>
         </div>
       </div>
 
-      <div class="roi-percentage">3,621% - 6,071% ROI</div>
+      <div class="roi-grid">
+        <div class="roi-stat" style="background: rgba(16, 185, 129, 0.2);">
+          <div class="label">Year 1 Net Benefit</div>
+          <div class="amount">6,105 - 10,905 AED</div>
+        </div>
+        <div class="roi-stat">
+          <div class="label">Your Investment (Year 1)</div>
+          <div class="amount" style="font-size: 2rem;">495 AED</div>
+          <p style="font-size: 1rem; opacity: 0.8; margin-top: 0.5rem;">(Months 1-2 FREE, then 49.50 AED × 10 months)</p>
+        </div>
+      </div>
 
-      <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">For every 1 AED you invest, you get back 36-60 AED. This isn't an expense—it's the most profitable investment in your business.</p>
+      <div class="roi-percentage">1,233% - 2,203% ROI</div>
+
+      <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 2rem auto 0;">For every 1 AED you invest, you save 12-22 AED. That's conservative - actual savings may be higher.</p>
     </section>
 
     <!-- Slide 7: Pricing Timeline -->
     <section class="slide pricing-slide" data-slide="7">
-      <h2>Enhanced Beta Deal Breakdown</h2>
+      <h2>Founding Customer Pricing</h2>
+      <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">Pro Tier Foundation + Business Tier Features Included</p>
 
       <div class="timeline">
         <div class="timeline-item">
-          <div class="period">Months 1-3</div>
+          <div class="period">Months 1-2</div>
           <div class="price free">100% FREE</div>
-          <p>Full access to Business Tier features. Direct feedback channel. Influence feature roadmap.</p>
-          <div class="savings">✨ Value: 597 AED</div>
+          <p>Full access to Pro Tier features. Direct feedback channel. Influence feature roadmap.</p>
+          <div class="savings">✨ Value: 198 AED</div>
         </div>
 
         <div class="timeline-item">
-          <div class="period">Months 4-12</div>
-          <div class="price">99.50 AED/month</div>
-          <p><strong>50% OFF</strong> regular price of 199 AED. Early adopter pricing with priority support.</p>
-          <div class="savings">💰 Total Savings: 895.50 AED</div>
+          <div class="period">Months 3-12</div>
+          <div class="price">49.50 AED/month</div>
+          <p><strong>50% OFF</strong> Pro Tier (normally 99 AED). All features unlocked, priority support included.</p>
+          <div class="savings">💰 Total Savings: 495 AED over 10 months</div>
         </div>
 
         <div class="timeline-item">
           <div class="period">Month 13+ Forever</div>
-          <div class="price">139.30 AED/month</div>
-          <p><strong>Lifetime 30% Discount</strong> - Permanent founder pricing locked in forever. Price protection against future increases.</p>
-          <div class="savings">🎯 VIP Status Forever</div>
+          <div class="price">74.25 AED/month</div>
+          <p><strong>Lifetime 25% Discount</strong> - Permanent founder pricing locked in forever.</p>
+          <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.9;">
+            <strong>Future-Proof:</strong> Get all features as they launch (including Business Tier additions) at this price.
+            Only upgrade to Business Tier pricing (149.25 AED with your 25% discount) if you exceed 100+ orders/day or open multi-locations.
+          </p>
+          <div class="savings">🎯 25% Discount Locked FOREVER</div>
         </div>
       </div>
 
-      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--secondary);">Total Year 1 Savings: 1,492.50 AED</p>
+      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--secondary);">Total Year 1 Investment: Only 495 AED</p>
+      <p style="font-size: 1.2rem; margin-top: 0.5rem; opacity: 0.9;">(While saving 6,105-10,905 AED)</p>
     </section>
 
     <!-- Slide 8: Benefits -->
@@ -1345,50 +1410,74 @@
       <div class="benefits-grid">
         <div class="benefit-card" style="animation-delay: 0.1s;">
           <div class="checkmark">✅</div>
-          <h3>Extended FREE Trial</h3>
-          <p>3 months full access (597 AED value)</p>
+          <h3>2-Month FREE Trial</h3>
+          <p>Full Pro Tier access (198 AED value)</p>
         </div>
 
         <div class="benefit-card" style="animation-delay: 0.2s;">
           <div class="checkmark">✅</div>
-          <h3>50% Discount</h3>
-          <p>Months 4-12 (895.50 AED saved)</p>
+          <h3>50% Discount (10 Months)</h3>
+          <p>Months 3-12 at 49.50 AED (saves 495 AED)</p>
         </div>
 
         <div class="benefit-card" style="animation-delay: 0.3s;">
           <div class="checkmark">✅</div>
-          <h3>Lifetime 30% OFF</h3>
-          <p>Forever pricing at 139.30 AED/month</p>
+          <h3>Lifetime 25% OFF</h3>
+          <p>Forever pricing at 74.25 AED/month</p>
         </div>
 
         <div class="benefit-card" style="animation-delay: 0.4s;">
           <div class="checkmark">✅</div>
-          <h3>Buyer Link Early Access</h3>
-          <p>Beta feature (saves 2-3 hours daily)</p>
+          <h3>ALL Features Included</h3>
+          <p>Pro + future Business Tier features unlocked</p>
         </div>
 
         <div class="benefit-card" style="animation-delay: 0.5s;">
+          <div class="checkmark">✅</div>
+          <h3>Future-Proof Pricing</h3>
+          <p>25% discount locked even if you upgrade to Business Tier</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.6s;">
+          <div class="checkmark">✅</div>
+          <h3>Buyer Link Priority Access</h3>
+          <p>Coming Soon - Get it first (saves 2-3 hours daily)</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.7s;">
+          <div class="checkmark">✅</div>
+          <h3>Shopping List Generator</h3>
+          <p>Coming Soon bonus feature (saves delivery fees)</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.8s;">
           <div class="checkmark">✅</div>
           <h3>Direct Developer Access</h3>
           <p>Priority feature requests and support</p>
         </div>
 
-        <div class="benefit-card" style="animation-delay: 0.6s;">
+        <div class="benefit-card" style="animation-delay: 0.9s;">
           <div class="checkmark">✅</div>
           <h3>Founding Customer Badge</h3>
           <p>Recognition in our success story</p>
         </div>
 
-        <div class="benefit-card" style="animation-delay: 0.7s;">
+        <div class="benefit-card" style="animation-delay: 1.0s;">
           <div class="checkmark">✅</div>
           <h3>Feature Roadmap Influence</h3>
           <p>Help shape future development</p>
         </div>
 
-        <div class="benefit-card" style="animation-delay: 0.8s;">
+        <div class="benefit-card" style="animation-delay: 1.1s;">
           <div class="checkmark">✅</div>
           <h3>Price Lock Guarantee</h3>
-          <p>Never pay more than 139.30 AED/month</p>
+          <p>Never pay more than 74.25 AED unless you choose Business Tier upgrade</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 1.2s;">
+          <div class="checkmark">✅</div>
+          <h3>Zero Risk Trial</h3>
+          <p>2 months to decide if it's worth 49.50 AED/month</p>
         </div>
       </div>
     </section>
@@ -1401,7 +1490,7 @@
       <div class="checklist">
         <div class="checklist-item" style="animation-delay: 0.1s;">
           <span class="checkbox">☑️</span>
-          <div>Use OrderPrep daily for business operations during months 1-3</div>
+          <div>Use OrderPrep daily for business operations during months 1-2</div>
         </div>
 
         <div class="checklist-item" style="animation-delay: 0.2s;">
@@ -1444,7 +1533,7 @@
             <li>Personal training session (1-2 hours)</li>
             <li>Data migration assistance (menu, customers, orders)</li>
             <li>WhatsApp integration setup</li>
-            <li>Buyer Link system configuration</li>
+            <li>Core features activation (Payment Tracking, Menu Planner, Analytics)</li>
           </ul>
         </div>
 
@@ -1469,10 +1558,10 @@
         </div>
 
         <div class="roadmap-item" style="animation-delay: 0.4s;">
-          <div class="week">Month 4+</div>
+          <div class="week">Month 3+</div>
           <h3>Transition to Paid</h3>
           <ul style="margin-left: 1.5rem; opacity: 0.9;">
-            <li>Invoice for 99.50 AED/month (50% OFF)</li>
+            <li>Invoice for 49.50 AED/month (50% OFF Pro Tier)</li>
             <li>Continued priority support</li>
             <li>New features preview access</li>
           </ul>
@@ -1507,7 +1596,7 @@
         <div class="guarantee-card" style="animation-delay: 0.4s;">
           <div class="emoji">🛡️</div>
           <h3>Privacy Guarantee</h3>
-          <p>Local-only storage by default. No data sharing, ever.</p>
+          <p>Local-only storage by default. Planning migration to secured server with encrypted protection for backups only. Your data, your control.</p>
         </div>
       </div>
     </section>
@@ -1519,7 +1608,7 @@
       <div class="steps">
         <div class="step" style="animation-delay: 0.1s;">
           <div class="number">1</div>
-          <div>Click "Start FREE 3 Months" below</div>
+          <div>Click "Start FREE 2 Months" below</div>
         </div>
 
         <div class="step" style="animation-delay: 0.2s;">
@@ -1543,10 +1632,10 @@
       </div>
 
       <div class="action-buttons">
-        <a href="https://wa.me/YOUR_PHONE_NUMBER?text=YES!%20I'm%20ready%20to%20become%20Founding%20Customer%20%231" class="whatsapp">
-          💬 Start Your FREE 3 Months
+        <a href="https://orderprep.vercel.app" class="whatsapp" target="_blank">
+          💬 Start Your FREE 2 Months
         </a>
-        <a href="mailto:your-email@example.com?subject=Founding Customer Proposal - Questions" class="email">
+        <a href="https://wa.me/971509387955?text=Hi!%20I%20have%20questions%20about%20the%20Founding%20Customer%20proposal" class="email" target="_blank">
           📧 I Have Questions
         </a>
       </div>
@@ -1555,9 +1644,9 @@
 
   <!-- Navigation Controls -->
   <div id="controls">
-    <button id="prev" onclick="prevSlide()">←</button>
+    <button id="prev">←</button>
     <span id="counter">1 / 12</span>
-    <button id="next" onclick="nextSlide()">→</button>
+    <button id="next">→</button>
   </div>
 
   <script>
@@ -1575,9 +1664,13 @@
         }
       });
 
-      document.getElementById('counter').textContent = `${currentSlide} / ${totalSlides}`;
-      document.getElementById('prev').disabled = currentSlide === 1;
-      document.getElementById('next').disabled = currentSlide === totalSlides;
+      const counter = document.getElementById('counter');
+      const prevBtn = document.getElementById('prev');
+      const nextBtn = document.getElementById('next');
+
+      if (counter) counter.textContent = `${currentSlide} / ${totalSlides}`;
+      if (prevBtn) prevBtn.disabled = currentSlide === 1;
+      if (nextBtn) nextBtn.disabled = currentSlide === totalSlides;
     }
 
     function nextSlide() {
@@ -1594,32 +1687,66 @@
       }
     }
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') nextSlide();
-      if (e.key === 'ArrowLeft') prevSlide();
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Navigation button event listeners
+      const prevBtn = document.getElementById('prev');
+      const nextBtn = document.getElementById('next');
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', prevSlide);
+        prevBtn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          prevSlide();
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', nextSlide);
+        nextBtn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          nextSlide();
+        });
+      }
+
+      // "Tap to Begin" button on Slide 1
+      const ctaButtons = document.querySelectorAll('.cta-button');
+      ctaButtons.forEach(btn => {
+        btn.addEventListener('click', nextSlide);
+        btn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          nextSlide();
+        });
+      });
+
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') nextSlide();
+        if (e.key === 'ArrowLeft') prevSlide();
+      });
+
+      // Touch swipe support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      }, { passive: true });
+
+      document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }, { passive: true });
+
+      function handleSwipe() {
+        const swipeThreshold = 50;
+        if (touchEndX < touchStartX - swipeThreshold) nextSlide();
+        if (touchEndX > touchStartX + swipeThreshold) prevSlide();
+      }
+
+      // Initialize
+      updateSlide();
     });
-
-    // Touch swipe support
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    document.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    });
-
-    document.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    });
-
-    function handleSwipe() {
-      if (touchEndX < touchStartX - 50) nextSlide();
-      if (touchEndX > touchStartX + 50) prevSlide();
-    }
-
-    // Initialize
-    updateSlide();
   </script>
 </body>
 </html>
