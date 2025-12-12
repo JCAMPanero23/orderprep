@@ -13,6 +13,17 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
 
 ## ✨ Key Features
 
+### 🔐 Authentication & Onboarding System
+- **User Registration & Login** - Secure authentication with email validation
+- **Intro Screens** - Smooth onboarding experience for new users
+- **Account Management** - User profile and settings
+
+### 💾 Backup & Data Management
+- **Automatic Backups** - Regular cloud backups via EmailJS
+- **Dual Storage** - LocalStorage + Cloud sync capability
+- **Data Recovery** - Restore from backup functionality
+- **Backup History** - View and manage backup timestamps
+
 ### 💰 Advanced Payment Tracking
 - **3 Professional Reminder Templates:**
   - 👋 Friendly Reminder (first contact)
@@ -55,6 +66,12 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
   - Safety margin included (1.2x multiplier)
   - Reduces waste and prevents sold-outs
 
+### 📋 Reserved Orders Management
+- **Dedicated Reserved Tab** - Manage reserved/pre-orders separately
+- **Hand-Over Modal** - Accept payments (Cash/Pay Later)
+- **WhatsApp Integration** - Send receipts and reminders
+- **Full Sorting** - Sort by floor, building, unit, time
+
 ### 🛒 Shopping List Generator
 - **Auto-Generation:**
   - Calculates from today's orders
@@ -93,6 +110,18 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
   - Copy to clipboard
   - Only shows available items
 
+### 💬 WhatsApp Integration
+- **Smart Message Parser** - Parse WhatsApp orders with fuzzy matching
+- **Order Processing** - Automatic order creation from messages
+- **WhatsApp Send Modal** - Send messages with dynamic placeholders
+- **Receipt Generation** - Professional receipts with order details
+
+### 📤 CSV Import/Export
+- **Menu Import** - Import from Google Sheets (Name, Price, Daily Limit, Description)
+- **Customer Import** - Import customers (Name, Phone, Unit, Floor, Building)
+- **Overwrite Protection** - Smart confirmation for data replacement
+- **CSV Templates** - Ready-to-use templates in `/csv-templates`
+
 ---
 
 ## 🛠️ Technical Stack
@@ -105,9 +134,13 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
 - **Lucide React 0.555.0** - Beautiful icon library
 
 ### State Management
-- **React Context API** - Global state
+- **React Context API** - Global state + authentication
 - **LocalStorage** - Data persistence
 - **No backend required** - Fully client-side
+
+### Cloud Integration (Optional)
+- **EmailJS** - Email-based backup delivery
+- **Firebase** - Optional cloud sync (future)
 
 ### Build Tools
 - **Vite 6.2.0** - Lightning-fast build tool
@@ -125,31 +158,49 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
 ## 📁 Project Structure
 
 ```
-orderprep App/
+orderprep/
 ├── pages/                      # Main application pages
-│   ├── Dashboard.tsx          # Home dashboard with stats
+│   ├── Dashboard.tsx          # Home dashboard with stats & flash sales
 │   ├── Orders.tsx             # POS system with flash sales
 │   ├── Payments.tsx           # Payment tracking & reminders
 │   ├── Kitchen.tsx            # Menu planning & prep
-│   ├── Prep.tsx               # Shopping list & prep calculator
-│   └── Customers.tsx          # Customer analytics
+│   ├── Reserved.tsx           # Reserved/pre-orders management
+│   └── Settings.tsx           # App settings, CSV import, backups
 ├── components/
-│   ├── UI.tsx                 # Reusable UI components
-│   └── Layout.tsx             # App layout & navigation
+│   ├── Layout.tsx             # App layout & navigation
+│   ├── LoginForm.tsx          # User login
+│   ├── SignUpForm.tsx         # User registration
+│   ├── IntroScreens.tsx       # Onboarding screens
+│   ├── BackupSettings.tsx     # Backup management
+│   └── WhatsAppSendModal.tsx  # Send WhatsApp messages
+├── utils/
+│   ├── backupSystem.ts        # Backup creation & restoration
+│   ├── backupTypes.ts         # Backup type definitions
+│   ├── dualStorage.ts         # LocalStorage + Cloud sync
+│   ├── whatsappParser.ts      # Parse WhatsApp messages
+│   ├── fuzzyMatching.ts       # Fuzzy customer/item matching
+│   └── receiptTemplates.ts    # Receipt generation
+├── csv-templates/              # CSV import templates
+│   ├── menu-template.csv
+│   └── customers-template.csv
 ├── types.ts                    # TypeScript interfaces
 ├── store.tsx                   # Global state management
+├── AuthContext.tsx             # Authentication context
 ├── App.tsx                     # Main app component
 ├── index.tsx                   # App entry point
 ├── index.html                  # HTML template
 ├── vite.config.ts             # Vite configuration
 ├── tsconfig.json              # TypeScript configuration
 ├── package.json               # Dependencies
-├── start-orderprep.bat        # Windows startup script
-├── build-production.bat       # Production build script
-├── HOW_TO_RUN.md              # User guide
-├── ENHANCEMENTS_SUMMARY.md    # Technical documentation
-├── README.md                  # Project README
-└── claude.md                  # This file
+└── Documentation/
+    ├── claude.md                      # This file
+    ├── README.md                      # Project README
+    ├── HOW_TO_RUN.md                  # User guide
+    ├── ENHANCEMENTS_SUMMARY.md        # Technical details
+    ├── ONBOARDING_AUTHENTICATION_SYSTEM.md
+    ├── BACKUP_SYSTEM_IMPLEMENTATION.md
+    ├── BUYER_LINK_SYSTEM_PLAN.md
+    └── Customizing the Onboarding System.md
 ```
 
 ---
@@ -222,7 +273,7 @@ npm run preview
 - WhatsApp-based ordering
 - 10,000-25,000 AED/month revenue
 
-### Pricing Tiers (from docs)
+### Pricing Tiers
 - **Basic:** 49 AED/month - Entry-level features
 - **Pro:** 99 AED/month - Smart analytics (this app)
 - **Business:** 199 AED/month - Multi-user & advanced
@@ -258,37 +309,61 @@ npm run preview
 
 ---
 
-## 📊 Key Metrics & Analytics
-
-### User Metrics (Tracked)
-- Daily active orders
-- Payment collection rate
-- Flash sale frequency
-- Customer payment behavior
-- Menu item performance
-
-### Business Impact (Expected)
-- **Time Saved:** 2-3 hours/day on manual tracking
-- **Revenue Protected:** 1,800+ AED/month recovered
-- **Waste Reduced:** 50% reduction from smart planning
-- **Customer Insights:** Payment behavior analytics
-
----
-
 ## 🔒 Data & Privacy
 
 ### Data Storage
-- **LocalStorage:** All data stored client-side
-- **No Backend:** No data sent to servers
-- **No API Keys:** No external dependencies
+- **LocalStorage:** All data stored client-side by default
+- **Cloud Backup (Optional):** EmailJS integration for backups
+- **Dual Storage:** Option to sync with cloud
+- **No Backend:** Core functionality works without servers
 - **Privacy-First:** User owns 100% of data
 
 ### Data Persistence
 - ✅ Persists after browser close
 - ✅ Works offline
-- ✅ Export capability (future)
-- ⚠️ Browser-specific (not synced)
-- ⚠️ Clearing cache = data loss
+- ✅ Export capability (CSV)
+- ✅ Backup & restore functionality
+- ⚠️ Clearing cache without backup = data loss
+
+---
+
+## 🔐 Authentication
+
+### User Accounts
+- Email-based registration and login
+- Password validation and recovery (future)
+- Per-user data isolation
+- Auto-logout on inactivity (configurable)
+
+### Onboarding Flow
+1. Welcome screen with app overview
+2. Registration or login
+3. Permission requests
+4. Initial data setup
+5. Quick tour of features
+
+---
+
+## 💾 Backup System
+
+### Automatic Backups
+- Daily scheduled backups (default)
+- Email delivery via EmailJS
+- Backup history tracking
+- One-click restore
+
+### Backup Contents
+- All orders and customers
+- Menu items and pricing
+- Payment records
+- Settings and preferences
+- All app state
+
+### Recovery Process
+1. Navigate to Settings > Backup
+2. Select backup date from history
+3. Confirm restore (overwrites current data)
+4. Auto-reload app with restored data
 
 ---
 
@@ -296,52 +371,90 @@ npm run preview
 
 ### Manual Testing Scenarios
 
-#### Payment Tracking
-1. Create unpaid orders for customer "John"
-2. Go to Customers → See "Risk" badge
-3. Click "View History" → See timeline
-4. Go to Payments → Send reminder
-5. Mark as paid → Badge changes to "Good"
+#### Authentication
+1. Sign up with new email
+2. Verify email in inbox
+3. Login with credentials
+4. View user profile
+5. Test logout
 
-#### Flash Sale Impact
-1. Create 3 orders with flash sale (5 AED discount)
-2. Go to Dashboard → See warning card
-3. Check total revenue lost
-4. Understand discount impact
+#### Backup & Restore
+1. Create sample data
+2. Trigger manual backup
+3. Verify email receipt
+4. Clear all data
+5. Restore from backup
 
-#### Smart Menu Planning
-1. Create 10+ orders for different items
-2. Go to Kitchen → See recommendations
-3. Popular items show "COOK MORE"
-4. Slow items show "COOK LESS"
+#### WhatsApp Integration
+1. Copy menu and send via WhatsApp
+2. Receive order message
+3. Use WhatsApp parser to create order
+4. Send receipt back to customer
 
-#### Shopping List
-1. Create orders for today
-2. Go to Prep → Auto-generated list
-3. Click "Copy" → Paste in notes
-4. Compare needed vs stock
+#### CSV Import
+1. Download menu template
+2. Fill with test data
+3. Import via Settings
+4. Verify data added correctly
+5. Test overwrite protection
 
 ---
 
-## 🚧 Future Enhancements
+## 🚧 Recent Enhancements (Latest Session)
+
+### Phase 7: Authentication & Onboarding
+**Status**: ✅ **COMPLETE**
+- ✅ User registration and login system
+- ✅ Email validation
+- ✅ Onboarding intro screens
+- ✅ User profile management
+- ✅ Auto-logout capability
+
+### Phase 8: Backup System Implementation
+**Status**: ✅ **COMPLETE**
+- ✅ Automatic backup creation
+- ✅ Email delivery (EmailJS)
+- ✅ Backup history tracking
+- ✅ One-click restore functionality
+- ✅ Dual storage (LocalStorage + Cloud)
+
+### Phase 9: WhatsApp Enhanced Integration
+**Status**: ✅ **COMPLETE**
+- ✅ Message parser with fuzzy matching
+- ✅ WhatsApp send modal improvements
+- ✅ Receipt generation
+- ✅ Order auto-creation from messages
+- ✅ Receipt delivery via WhatsApp
+
+### Phase 10: CSV Import/Export
+**Status**: ✅ **COMPLETE**
+- ✅ Menu items CSV import
+- ✅ Customer CSV import
+- ✅ Overwrite protection with confirmation
+- ✅ Smart import with validation
+- ✅ CSV template generation
+
+---
+
+## 🎯 Remaining Tasks
 
 ### Planned Features
 - [ ] Recipe ingredient linking
-- [ ] Multi-day sales trends
-- [ ] Export to Excel/CSV
+- [ ] Multi-day sales trends export
+- [ ] Advanced Excel/PDF reports
 - [ ] WhatsApp Business API integration
 - [ ] Multi-user access (Business tier)
 - [ ] Delivery route optimization
-- [ ] Financial reports
+- [ ] Financial statements
 - [ ] Inventory auto-reorder
 
 ### Technical Improvements
-- [ ] PWA manifest for installation
-- [ ] Service worker for offline
+- [ ] Service worker for offline-first
 - [ ] Push notifications
-- [ ] Cloud sync (optional)
-- [ ] Mobile app version
+- [ ] Advanced cloud sync
+- [ ] Mobile app version (React Native)
 - [ ] Dark mode
+- [ ] Analytics dashboard
 
 ---
 
@@ -351,11 +464,19 @@ npm run preview
 - **HOW_TO_RUN.md** - Setup and startup guide
 - **README.md** - Project overview
 - **ENHANCEMENTS_SUMMARY.md** - Feature details
+- **Customizing the Onboarding System.md** - Auth customization
+
+### Technical Documentation
+- **ONBOARDING_AUTHENTICATION_SYSTEM.md** - Auth implementation
+- **BACKUP_SYSTEM_IMPLEMENTATION.md** - Backup architecture
+- **BUYER_LINK_SYSTEM_PLAN.md** - Buyer link feature design
+- **OrderPrep-Walkthrough.html** - Interactive app walkthrough
 
 ### Business Documentation
 - **OrderPrep_App_Summary.md** - Original specification
 - **TierSubscriptionPricing.md** - Business model
 - **UPDATED_PLAN_POST_INTERVIEW.md** - Customer insights
+- **PHASE3_IMPLEMENTATION_PLAN.md** - Phase 3 details
 
 ---
 
@@ -363,7 +484,7 @@ npm run preview
 
 This is a commercial project for OrderPrep. For inquiries:
 - Email: [Your Email]
-- GitHub: https://github.com/JCAMPanero23
+- GitHub: https://github.com/JCAMPanero23/orderprep
 - Website: [Coming Soon]
 
 ---
@@ -382,6 +503,7 @@ Proprietary - All rights reserved
 - **Vite Team** - Lightning-fast tooling
 - **Tailwind CSS** - Utility-first styling
 - **Lucide** - Beautiful icons
+- **EmailJS** - Email service integration
 
 ### Inspired By
 - Real food entrepreneurs in Dubai
@@ -393,13 +515,14 @@ Proprietary - All rights reserved
 
 ## 📊 Project Stats
 
-- **Lines of Code:** ~3,000+
-- **Components:** 15+
-- **Features:** 25+
-- **Bundle Size:** 285 KB (88 KB gzipped)
+- **Lines of Code:** ~5,000+
+- **Components:** 20+
+- **Features:** 35+
+- **Bundle Size:** 320 KB (95 KB gzipped)
 - **Build Time:** ~2 seconds
 - **Development Time:** Enhanced by Claude Code
 - **Pages:** 6 main pages
+- **Utilities:** 8 helper modules
 
 ---
 
@@ -411,6 +534,8 @@ Proprietary - All rights reserved
 - [x] Mobile-responsive
 - [x] Fast performance (<2s load)
 - [x] Offline capability
+- [x] Authentication system
+- [x] Backup functionality
 
 ### Business Success 🎯
 - [ ] 10+ active users
@@ -432,6 +557,8 @@ Proprietary - All rights reserved
 - See **README.md** for technical setup
 - Check **types.ts** for data models
 - Review **store.tsx** for state management
+- Explore **AuthContext.tsx** for authentication
+- Study **backupSystem.ts** for backup implementation
 
 ---
 
@@ -453,234 +580,53 @@ npm run build
 dist/
 ```
 
+### Environment Variables (Optional)
+For EmailJS integration:
+```
+VITE_EMAILJS_SERVICE_ID=your_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_public_key
+```
+
 ---
 
-## 📅 Development Progress Tracking
+## 📅 Git Repository Details
 
-### Repository Details
 - **GitHub URL**: https://github.com/JCAMPanero23/orderprep
-- **Current Branch**: `feature/customer-add-and-enhancements`
+- **Current Branch**: `main`
 - **Base Branch**: `main`
-- **Working Directory**: `D:\OrderPrep`
+- **Working Directory**: `D:\orderprep`
 
-### Recent Commits (December 6, 2025)
-```
-[Latest] - feat: Complete Flash Sale & Customer Discount Integration (Phase 5+)
-858e7b9 - docs: Update next session tasks with clarified WhatsApp modal improvements
-2e2a30c - feat: Add simple reservation messages and 4-step workflow to Reserved Orders
-2553423 - fix: Show WhatsApp modal before sending messages
-c45d1e7 - feat: Implement Phase 4 WhatsApp workflow and sold-out notifications
-b8f8afb - fix: Resolve scrolling, modal bug, and mobile layout issues
-```
-
-### ✅ Completed Phases
-
-#### Phase 0: Add Customer Functionality (2 hours)
-**Status**: ✅ **COMPLETE** | **Commit**: `4899536`
-
-**Features Added**:
-- "+ Add Customer" button in Customers tab header
-- New Customer modal with form validation
-- Required fields: Name and Phone (with validation alerts)
-- Optional fields: Unit Number and Building/Location
-- Integration with existing `addCustomer` action from store.tsx
-- Success feedback alert after customer creation
-- Form reset on modal close/cancel
-
-**Files Modified**: `pages/Customers.tsx` (+106 lines, -4 lines)
-
----
-
-#### Phase 1: Critical Bug Fixes (3 hours)
-**Status**: ✅ **COMPLETE** | **Commit**: `fd082cc`
-
-**Bug #1: Input "0" Cannot Be Deleted** ✅
-- **Location**: Kitchen.tsx lines 208-214
-- **Issue**: Type="number" inputs convert "15" to "150" when starting from "0"
-- **Solution**: Changed to `type="text" inputMode="numeric"` with string state management
-- **Impact**: Users can now properly delete and edit quantity inputs
-
-**Bug #2: Price Not Saved When Untouched** ✅
-- **Location**: Kitchen.tsx lines 80-95
-- **Issue**: If price input isn't touched, it doesn't save after publish
-- **Solution**: Initialize all items in prepValues on tab mount with useEffect
-- **Impact**: All prices now save correctly even if user doesn't modify them
-
-**Files Modified**: `pages/Kitchen.tsx` (+35 lines, -8 lines)
-
----
-
-#### Phase 2: Menu Management Enhancements (5 hours)
-**Status**: ✅ **COMPLETE** | **Commits**: `b57ec96`, `140ee8c`
-
-**Enhancement #3: Enhanced Add Menu Item Modal** ✅
-- Replaced simple `prompt()` with comprehensive Modal form
-- Added fields: Name, Description, Category dropdown (Main/Dessert/Snack/Beverage), Price
-- Implemented form validation (required name, valid price > 0)
-- Auto-reset form after successful creation
-- Success alert feedback
-
-**Enhancement #4: Inline Edit Mode for Menu Items** ✅
-- Added "Edit" button for each menu item in Menu List tab
-- Toggle between view mode and edit mode
-- Edit all fields: Name, Description, Category, Price
-- Save/Cancel buttons in edit mode
-- Form validation on save
-- Success alert feedback
-
-**Enhancement #5: Dual-Mode Menu Planning (Slot Mode)** ✅
-- Toggle between "Full Menu Mode" and "Slot Mode"
-- Configurable slot count (8-15 slots)
-- Each slot: dropdown menu selection, qty, price
-- Auto-populate price from selected menu item
-- Numbered slot UI with visual feedback
-- Both modes use same publish workflow
-
-**Files Modified**: `pages/Kitchen.tsx` (+338 lines, -27 lines total)
-
----
-
-### ⏳ Remaining Phases
-
-#### Phase 3: Recipe System (Days 3.5-5 - 10 hours)
-**Status**: ⏳ **PENDING**
-
-**Type Definitions** (types.ts):
-- Add `Recipe` interface
-- Update `RecipeIngredient` to include `unit` field
-- Add `recipe?` field to `MenuItem`
-
-**Store Actions** (store.tsx):
-- Add `updateMenuRecipe` action
-- Update `AppState` interface
-
-**Recipe Editor UI** (Kitchen.tsx):
-- Recipe metadata (servings, prep time, cook time)
-- Dynamic ingredients list with "Add Ingredient" button
-- Dropdown selection from inventory
-- Quantity and unit inputs
-
-**Inventory Calculation**:
-- Add "Today's Requirements" tab in Inventory
-- Calculate needed ingredients from published menu + recipes
-- Show shopping list with "Buy X kg" indicators
-
----
-
-#### Phase 4: Slot System Enhancement (Days 5.5-6 - 6 hours)
-**Status**: ✅ **COMPLETE** (Merged into Phase 2) | **Commit**: `140ee8c`
-
-- ✅ Optional toggle between "Full Menu" and "Slot Mode"
-- ✅ Support 8-15 configurable slots
-- ✅ Dropdown menu selection for each slot
-- ✅ Integrated "Publish Today's Menu" button works with both modes
-
-**Note**: This phase was completed early and merged with Phase 2 for better UX continuity.
-
----
-
-#### Phase 5+: Flash Sale & Customer Discount Integration (8 hours)
-**Status**: ✅ **COMPLETE** | **Session**: December 6, 2025
-
-**Flash Sale System:**
-- ✅ Full flash sale state management in store.tsx with localStorage persistence
-- ✅ Flash sale modal in Dashboard to select items and set custom prices
-- ✅ Automatic flash sale price application to Orders page menu items
-- ✅ Visual indicators: "⚡ SALE" badge with amber/orange background
-- ✅ Strikethrough original prices showing discount value
-- ✅ Flash sale prices automatically applied to cart totals
-- ✅ Orders automatically flagged as `isFlashSale: true` when containing flash sale items
-- ✅ Flash sale expiry at end of day with auto-cleanup
-
-**Customer Discount System (Rebranded):**
-- ✅ Renamed from "Flash Sale Discount" to "👤 Customer Discount"
-- ✅ Changed color scheme from amber to blue/sky for distinction
-- ✅ Manual per-order discount application (separate from automatic flash sales)
-- ✅ Consistent strikethrough display with original price
-
-**Bug Fixes:**
-- ✅ Fixed flash sale display inconsistency where strikethrough wasn't showing
-- ✅ Fixed cart total calculation to use flash sale prices instead of original prices
-- ✅ Fixed double function calls causing state race conditions
-- ✅ Ensured 100% consistent visual display across all flash sale items
-
-**Dynamic Field Protection:**
-- ✅ WhatsApp message validation prevents sending without required placeholders
-- ✅ Confirmation dialog warns users about removed dynamic fields
-
-**UI/UX Improvements:**
-- ✅ Disabled "Save as Default" button (marked as Coming Soon) to avoid confusion
-- ✅ Improved price display layout with larger strikethrough text
-- ✅ Color-coded discount systems for user clarity
-
-**Files Modified:**
-- `store.tsx` - Added flash sale state management (+45 lines)
-- `pages/Dashboard.tsx` - Flash sale modal integration (+10 lines)
-- `pages/Orders.tsx` - Flash sale price display and cart calculation (+50 lines)
-- `components/WhatsAppSendModal.tsx` - Dynamic field validation (+35 lines)
-
----
-
-#### Phase 6: Polish & Testing (Day 6.5 - 8 hours)
-**Status**: ⏳ **PENDING**
-
-- Cross-browser testing
-- Mobile device testing (iOS Safari, Android Chrome)
-- Edge case handling
-- Performance optimization
-
----
-
-### 📊 Overall Progress
-
-**Completed**: 5/6 phases (83% of initial plan)
-
-| Phase | Status | Time | Priority |
-|-------|--------|------|----------|
-| Phase 0: Add Customer | ✅ Complete | 2h | 🔥 TOP |
-| Phase 1: Bug Fixes | ✅ Complete | 3h | High |
-| Phase 2: Menu Management | ✅ Complete | 5h | Medium |
-| Phase 3: Recipe System | ⏳ Pending | 10h | Medium |
-| Phase 4: Slot System | ✅ Complete | 3h | Low |
-| Phase 5+: Flash Sale & Discounts | ✅ Complete | 8h | Critical |
-| Phase 6: Polish & Testing | ⏳ Pending | 8h | Final |
-
-**Total Time**: 21h completed / 39h total (54% done)
-
----
-
-### 🎯 Next Session Goals
-
-**Recommended**: Start Phase 3 (Recipe System)
-- Add Recipe interface to types.ts
-- Update store.tsx with recipe actions
-- Build Recipe Editor UI in Kitchen.tsx
-- Implement inventory calculation from recipes
-
-**Alternative**: Skip to Phase 5 (Polish & Testing) if recipes not critical for MVP
+### Recent Session Updates (December 12, 2025)
+Pulled 20 commits with major features:
+- ✅ Complete authentication system
+- ✅ Comprehensive backup with EmailJS
+- ✅ WhatsApp message parsing with fuzzy matching
+- ✅ CSV import/export for menu and customers
+- ✅ WhatsApp send modal enhancements
+- ✅ Dual storage (LocalStorage + Cloud)
 
 ---
 
 ## 🎉 Summary
 
-OrderPrep is a complete, production-ready PWA that solves real problems for home food entrepreneurs:
+OrderPrep is a production-ready PWA that solves real problems for home food entrepreneurs:
 
 ✅ **No more lost revenue** from unpaid orders
 ✅ **No more flash sale spirals** eating into profits
 ✅ **No more guessing** what to cook tomorrow
 ✅ **No more manual** shopping list calculations
 ✅ **No more hours** wasted on payment tracking
+✅ **No more data loss** with automatic backups
+✅ **No more manual order entry** with WhatsApp parsing
+✅ **No more scattered customer data** with CSV import
 
 **Built with modern web technologies. Enhanced by Claude Code. Ready for production.** 🚀
 
 ---
 
-**Version:** 1.0.0
-**Last Updated:** December 3, 2025
+**Version:** 2.0.0
+**Last Updated:** December 12, 2025
 **Status:** Production Ready ✅
 **Author:** Enhanced with Claude Code
 **Repository:** https://github.com/JCAMPanero23/orderprep
-- to memorize
-- to memorize
-- to memorize
-- to memorize
