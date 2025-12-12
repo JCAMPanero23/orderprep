@@ -6,6 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="format-detection" content="telephone=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-touch-fullscreen" content="yes">
   <title>OrderPrep - Founding Customer #1 Exclusive Proposal</title>
   <style>
     :root {
@@ -28,30 +30,42 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Allow text selection for paragraphs */
+    p, li, span:not(.number):not(.emoji):not(.checkmark):not(.checkbox) {
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     html {
+      height: -webkit-fill-available;
       -webkit-text-size-adjust: 100%;
-      -ms-text-size-adjust: 100%;
-      touch-action: manipulation;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--light);
-      color: var(--dark);
-      overflow: hidden;
-      height: 100vh;
-      position: fixed;
-      width: 100%;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+
+    body {
+      position: fixed;
+      width: 100%;
+      height: -webkit-fill-available;
+      overflow: hidden;
+      margin: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
 
     #slides {
       position: relative;
       width: 100%;
       height: 100vh;
+      -webkit-perspective: 1000px;
+      perspective: 1000px;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
     }
 
     .slide {
@@ -67,18 +81,26 @@
       padding: 2rem;
       opacity: 0;
       transform: translateX(100%);
+      -webkit-transform: translateX(100%);
       transition: all 0.5s ease;
+      -webkit-transition: all 0.5s ease;
       pointer-events: none;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      will-change: transform, opacity;
+      z-index: 1;
     }
 
     .slide.active {
       opacity: 1;
       transform: translateX(0);
+      -webkit-transform: translateX(0);
       pointer-events: auto;
     }
 
     .slide.prev {
       transform: translateX(-100%);
+      -webkit-transform: translateX(-100%);
     }
 
     /* Slide 1: Hero */
@@ -126,11 +148,28 @@
       animation: fadeInUp 1s ease 0.6s backwards;
       cursor: pointer;
       border: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      will-change: transform;
     }
 
-    .cta-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    .cta-button:active {
+      transform: scale(0.98);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Only apply hover on non-touch devices */
+    @media (hover: hover) and (pointer: fine) {
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
     }
 
     /* Slide 2: Pain Points */
@@ -226,15 +265,28 @@
     .feature-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 2rem;
       border-radius: 20px;
       transition: transform 0.3s ease;
+      -webkit-transition: transform 0.3s ease;
       animation: fadeInUp 0.6s ease backwards;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      will-change: transform;
     }
 
-    .feature-card:hover {
-      transform: translateY(-5px);
-      background: rgba(255, 255, 255, 0.15);
+    .feature-card:active {
+      transform: scale(0.98);
+    }
+
+    /* Only apply hover on non-touch devices */
+    @media (hover: hover) and (pointer: fine) {
+      .feature-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.15);
+      }
     }
 
     .feature-card .emoji {
@@ -315,6 +367,7 @@
     .roi-stat {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 2rem;
       border-radius: 20px;
     }
@@ -422,6 +475,7 @@
     .benefit-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 1.5rem;
       border-radius: 15px;
       animation: fadeInUp 0.6s ease backwards;
@@ -546,6 +600,7 @@
     .guarantee-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 2rem;
       border-radius: 20px;
       animation: fadeInUp 0.6s ease backwards;
@@ -623,6 +678,12 @@
       font-size: 1.2rem;
       text-decoration: none;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      will-change: transform;
     }
 
     .action-buttons .whatsapp {
@@ -635,17 +696,25 @@
       color: var(--primary);
     }
 
-    .action-buttons a:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    .action-buttons a:active {
+      transform: scale(0.98);
     }
 
-    /* Navigation Controls */
+    /* Only apply hover on non-touch devices */
+    @media (hover: hover) and (pointer: fine) {
+      .action-buttons a:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    /* Navigation Controls - TOP positioned for iOS Safari reliability */
     #controls {
       position: fixed;
-      bottom: 2rem;
+      top: calc(env(safe-area-inset-top) + 1rem);
       left: 50%;
       transform: translateX(-50%);
+      -webkit-transform: translateX(-50%);
       display: flex;
       align-items: center;
       gap: 2rem;
@@ -656,7 +725,7 @@
       border-radius: 50px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       z-index: 9999;
-      -webkit-transform: translateX(-50%);
+      pointer-events: auto;
     }
 
     #controls button {
@@ -673,23 +742,43 @@
       align-items: center;
       justify-content: center;
       -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      outline: none;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      will-change: transform;
+      position: relative;
+      z-index: 10000;
+      pointer-events: auto;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
-    #controls button:hover {
-      transform: scale(1.1);
+    #controls button:active {
+      transform: scale(0.95);
       background: #4f46e5;
+    }
+
+    /* Only apply hover on non-touch devices */
+    @media (hover: hover) and (pointer: fine) {
+      #controls button:hover {
+        transform: scale(1.1);
+        background: #4f46e5;
+      }
+
+      #controls button:disabled:hover {
+        transform: scale(1);
+        background: var(--primary);
+      }
     }
 
     #controls button:disabled {
       opacity: 0.3;
       cursor: not-allowed;
-    }
-
-    #controls button:disabled:hover {
-      transform: scale(1);
-      background: var(--primary);
     }
 
     #counter {
@@ -748,7 +837,7 @@
       }
 
       .slide {
-        padding: max(2rem, env(safe-area-inset-top, 2rem)) max(1.25rem, env(safe-area-inset-right, 1.25rem)) 6rem max(1.25rem, env(safe-area-inset-left, 1.25rem));
+        padding: max(6rem, calc(env(safe-area-inset-top) + 5rem)) max(1.25rem, env(safe-area-inset-right, 1.25rem)) max(2rem, env(safe-area-inset-bottom, 2rem)) max(1.25rem, env(safe-area-inset-left, 1.25rem));
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         justify-content: flex-start;
@@ -756,10 +845,10 @@
         height: -webkit-fill-available;
       }
 
-      /* iOS specific slide padding */
+      /* iOS specific slide padding - more top padding for controls */
       @supports (-webkit-touch-callout: none) {
         .slide {
-          padding-bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px)) !important;
+          padding-top: max(6rem, calc(env(safe-area-inset-top) + 5.5rem)) !important;
         }
       }
 
@@ -1110,20 +1199,19 @@
         justify-content: center;
       }
 
-      /* Controls mobile - iPhone safe area */
+      /* Controls mobile - TOP positioned for iOS Safari */
       #controls {
-        bottom: env(safe-area-inset-bottom, 20px);
-        padding: 1rem 1.75rem;
-        gap: 1.75rem;
+        top: calc(env(safe-area-inset-top) + 0.75rem);
+        padding: 0.875rem 1.5rem;
+        gap: 1.5rem;
         background: rgba(255, 255, 255, 0.98);
-        box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.15);
-        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
       }
 
       /* Ensure controls are always visible on iOS */
       @supports (-webkit-touch-callout: none) {
         #controls {
-          bottom: max(0.5rem, env(safe-area-inset-bottom, 20px));
+          top: max(0.75rem, calc(env(safe-area-inset-top) + 0.75rem));
           position: fixed;
           -webkit-transform: translateX(-50%);
         }
@@ -1693,30 +1781,55 @@
       const prevBtn = document.getElementById('prev');
       const nextBtn = document.getElementById('next');
 
+      // Use touchstart for immediate response on iOS
       if (prevBtn) {
-        prevBtn.addEventListener('click', prevSlide);
-        prevBtn.addEventListener('touchend', function(e) {
+        let prevTouchHandled = false;
+        prevBtn.addEventListener('touchstart', function(e) {
           e.preventDefault();
+          prevTouchHandled = true;
           prevSlide();
-        });
+        }, { passive: false });
+        prevBtn.addEventListener('click', function(e) {
+          if (!prevTouchHandled) {
+            e.preventDefault();
+            prevSlide();
+          }
+          prevTouchHandled = false;
+        }, false);
       }
 
       if (nextBtn) {
-        nextBtn.addEventListener('click', nextSlide);
-        nextBtn.addEventListener('touchend', function(e) {
+        let nextTouchHandled = false;
+        nextBtn.addEventListener('touchstart', function(e) {
           e.preventDefault();
+          nextTouchHandled = true;
           nextSlide();
-        });
+        }, { passive: false });
+        nextBtn.addEventListener('click', function(e) {
+          if (!nextTouchHandled) {
+            e.preventDefault();
+            nextSlide();
+          }
+          nextTouchHandled = false;
+        }, false);
       }
 
       // "Tap to Begin" button on Slide 1
       const ctaButtons = document.querySelectorAll('.cta-button');
       ctaButtons.forEach(btn => {
-        btn.addEventListener('click', nextSlide);
-        btn.addEventListener('touchend', function(e) {
+        let ctaTouchHandled = false;
+        btn.addEventListener('touchstart', function(e) {
           e.preventDefault();
+          ctaTouchHandled = true;
           nextSlide();
-        });
+        }, { passive: false });
+        btn.addEventListener('click', function(e) {
+          if (!ctaTouchHandled) {
+            e.preventDefault();
+            nextSlide();
+          }
+          ctaTouchHandled = false;
+        }, false);
       });
 
       // Keyboard navigation
@@ -1725,27 +1838,75 @@
         if (e.key === 'ArrowLeft') prevSlide();
       });
 
-      // Touch swipe support
+      // Touch swipe support (iOS Safari optimized)
       let touchStartX = 0;
       let touchEndX = 0;
+      let touchStartY = 0;
+      let touchEndY = 0;
+      let isSwiping = false;
 
-      document.addEventListener('touchstart', (e) => {
+      const slidesContainer = document.getElementById('slides');
+
+      slidesContainer.addEventListener('touchstart', (e) => {
         touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+        isSwiping = false;
       }, { passive: true });
 
-      document.addEventListener('touchend', (e) => {
+      slidesContainer.addEventListener('touchmove', (e) => {
+        // Detect horizontal swipe to prevent scroll during swipe
+        const touchMoveX = e.changedTouches[0].screenX;
+        const touchMoveY = e.changedTouches[0].screenY;
+        const deltaX = Math.abs(touchMoveX - touchStartX);
+        const deltaY = Math.abs(touchMoveY - touchStartY);
+
+        if (deltaX > deltaY && deltaX > 10) {
+          isSwiping = true;
+        }
+      }, { passive: true });
+
+      slidesContainer.addEventListener('touchend', (e) => {
         touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
+        touchEndY = e.changedTouches[0].screenY;
+
+        if (isSwiping) {
+          handleSwipe();
+        }
       }, { passive: true });
 
       function handleSwipe() {
         const swipeThreshold = 50;
-        if (touchEndX < touchStartX - swipeThreshold) nextSlide();
-        if (touchEndX > touchStartX + swipeThreshold) prevSlide();
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = Math.abs(touchEndY - touchStartY);
+
+        // Only trigger if horizontal swipe is more pronounced than vertical
+        if (Math.abs(deltaX) > swipeThreshold && deltaY < 100) {
+          if (deltaX < 0) nextSlide(); // Swipe left
+          if (deltaX > 0) prevSlide(); // Swipe right
+        }
       }
+
+      // Prevent double-tap zoom on iOS Safari (but allow button clicks)
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        // Only prevent if NOT clicking on a button, link, or interactive element
+        const isInteractive = e.target.closest('button, a, .cta-button, #controls');
+        if (!isInteractive && now - lastTouchEnd <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
 
       // Initialize
       updateSlide();
+
+      // Force layout recalculation on iOS orientation change
+      window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+          updateSlide();
+        }, 100);
+      });
     });
   </script>
 </body>
