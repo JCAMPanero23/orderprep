@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>OrderPrep - Founding Customer #1 Exclusive Proposal</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --secondary: #10b981;
+      --accent: #f59e0b;
+      --dark: #1f2937;
+      --light: #f9fafb;
+      --white: #ffffff;
+      --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --safe-area-inset-top: env(safe-area-inset-top);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom);
+      --safe-area-inset-left: env(safe-area-inset-left);
+      --safe-area-inset-right: env(safe-area-inset-right);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      overflow: hidden;
+      height: 100vh;
+      position: fixed;
+      width: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    #slides {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.5s ease;
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .slide.prev {
+      transform: translateX(-100%);
+    }
+
+    /* Slide 1: Hero */
+    .hero-slide {
+      background: var(--gradient);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .hero-slide h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      animation: fadeInUp 1s ease;
+    }
+
+    .hero-slide .subtitle {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      opacity: 0.9;
+      margin-bottom: 2rem;
+      animation: fadeInUp 1s ease 0.2s backwards;
+    }
+
+    .hero-slide .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      margin-top: 1rem;
+      animation: fadeInUp 1s ease 0.4s backwards;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: var(--white);
+      color: var(--primary);
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeInUp 1s ease 0.6s backwards;
+      cursor: pointer;
+      border: none;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Slide 2: Pain Points */
+    .pain-slide {
+      background: linear-gradient(to bottom, #fee2e2, #fecaca);
+    }
+
+    .pain-slide h2 {
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: #dc2626;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .pain-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      width: 100%;
+    }
+
+    .pain-card {
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .pain-card:nth-child(1) { animation-delay: 0.1s; }
+    .pain-card:nth-child(2) { animation-delay: 0.2s; }
+    .pain-card:nth-child(3) { animation-delay: 0.3s; }
+    .pain-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .pain-card .emoji {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .pain-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: #dc2626;
+    }
+
+    /* Slide 3: The Numbers */
+    .numbers-slide {
+      background: var(--dark);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .numbers-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 2rem;
+    }
+
+    .loss-amount {
+      font-size: clamp(4rem, 10vw, 8rem);
+      font-weight: 900;
+      color: #ef4444;
+      font-family: monospace;
+      margin: 2rem 0;
+      animation: pulse 2s ease infinite;
+    }
+
+    .loss-label {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      opacity: 0.8;
+    }
+
+    /* Slide 4: Solution */
+    .solution-slide {
+      background: var(--gradient);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .solution-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 3rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 20px;
+      transition: transform 0.3s ease;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .feature-card .emoji {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Slide 5: Buyer Link */
+    .bonus-slide {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .bonus-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 800px;
+      margin: 2rem auto;
+    }
+
+    .comparison-card {
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--dark);
+      padding: 2rem;
+      border-radius: 20px;
+    }
+
+    .comparison-card.before {
+      border: 3px solid #ef4444;
+    }
+
+    .comparison-card.after {
+      border: 3px solid #10b981;
+    }
+
+    .comparison-time {
+      font-size: 3rem;
+      font-weight: 900;
+      margin: 1rem 0;
+    }
+
+    /* Slide 6: ROI Calculator */
+    .roi-slide {
+      background: var(--gradient-green);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .roi-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 2rem;
+    }
+
+    .roi-grid {
+      display: grid;
+      gap: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .roi-stat {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 20px;
+    }
+
+    .roi-stat .label {
+      font-size: 1.2rem;
+      opacity: 0.9;
+      margin-bottom: 1rem;
+    }
+
+    .roi-stat .amount {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 900;
+      font-family: monospace;
+      color: #fef3c7;
+    }
+
+    .roi-percentage {
+      font-size: clamp(4rem, 10vw, 8rem);
+      font-weight: 900;
+      margin: 2rem 0;
+      animation: countUp 2s ease;
+    }
+
+    /* Slide 7: Pricing Timeline */
+    .pricing-slide {
+      background: var(--light);
+      text-align: center;
+    }
+
+    .pricing-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      color: var(--dark);
+      margin-bottom: 3rem;
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .timeline-item {
+      background: var(--white);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      text-align: left;
+      position: relative;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+    .timeline-item:nth-child(2) { animation-delay: 0.2s; }
+    .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+
+    .timeline-item .period {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-item .price {
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--secondary);
+      margin: 1rem 0;
+    }
+
+    .timeline-item .free {
+      color: #10b981;
+    }
+
+    .timeline-item .savings {
+      font-size: 1rem;
+      color: #059669;
+      font-weight: 700;
+      margin-top: 1rem;
+    }
+
+    /* Slide 8: Benefits */
+    .benefits-slide {
+      background: var(--gradient);
+      color: var(--white);
+      overflow-y: auto;
+    }
+
+    .benefits-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .benefit-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem;
+      border-radius: 15px;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .benefit-card .checkmark {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .benefit-card h3 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .benefit-card p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Slide 9: Responsibilities */
+    .responsibilities-slide {
+      background: var(--light);
+      text-align: center;
+    }
+
+    .responsibilities-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      color: var(--dark);
+      margin-bottom: 1rem;
+    }
+
+    .responsibilities-slide .subtitle {
+      font-size: 1.3rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .checklist {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .checklist-item {
+      background: var(--white);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .checklist-item .checkbox {
+      font-size: 1.5rem;
+      color: var(--secondary);
+    }
+
+    /* Slide 10: Timeline */
+    .implementation-slide {
+      background: var(--dark);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .implementation-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 2rem;
+    }
+
+    .roadmap {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .roadmap-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      border-radius: 20px;
+      text-align: left;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .roadmap-item .week {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmap-item h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Slide 11: Guarantee */
+    .guarantee-slide {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .guarantee-slide h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin-bottom: 2rem;
+    }
+
+    .guarantee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .guarantee-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 20px;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .guarantee-card .emoji {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Slide 12: CTA */
+    .cta-slide {
+      background: var(--gradient);
+      color: var(--white);
+      text-align: center;
+    }
+
+    .cta-slide h2 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      margin-bottom: 1rem;
+    }
+
+    .cta-slide .steps {
+      max-width: 600px;
+      margin: 2rem auto;
+      text-align: left;
+    }
+
+    .step {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeInUp 0.6s ease backwards;
+    }
+
+    .step .number {
+      font-size: 2rem;
+      font-weight: 900;
+      background: var(--white);
+      color: var(--primary);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .urgency {
+      background: rgba(239, 68, 68, 0.2);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .action-buttons a {
+      display: inline-block;
+      padding: 1.2rem 2.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .action-buttons .whatsapp {
+      background: #25d366;
+      color: var(--white);
+    }
+
+    .action-buttons .email {
+      background: var(--white);
+      color: var(--primary);
+    }
+
+    .action-buttons a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Navigation Controls */
+    #controls {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    #controls button {
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #controls button:hover {
+      transform: scale(1.1);
+      background: #4f46e5;
+    }
+
+    #controls button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    #controls button:disabled:hover {
+      transform: scale(1);
+      background: var(--primary);
+    }
+
+    #counter {
+      font-weight: 700;
+      color: var(--dark);
+      font-family: monospace;
+      font-size: 1rem;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    @keyframes countUp {
+      from {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* Mobile Responsive - iPhone Optimized */
+    @media (max-width: 768px) {
+      :root {
+        font-size: 16px;
+      }
+
+      body {
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+
+      #slides {
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+
+      .slide {
+        padding: max(2rem, var(--safe-area-inset-top)) max(1.25rem, var(--safe-area-inset-right)) max(7rem, var(--safe-area-inset-bottom)) max(1.25rem, var(--safe-area-inset-left));
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        height: 100vh;
+        height: -webkit-fill-available;
+      }
+
+      /* Larger touch targets for iOS */
+      .cta-button {
+        min-height: 56px;
+        padding: 1.125rem 2rem;
+        font-size: 1.15rem;
+      }
+
+      /* Hero slide mobile */
+      .hero-slide h1 {
+        font-size: 2.25rem;
+        line-height: 1.2;
+      }
+
+      .hero-slide .subtitle {
+        font-size: 1.2rem;
+      }
+
+      .hero-slide .badge {
+        font-size: 0.95rem;
+        padding: 0.625rem 1.25rem;
+      }
+
+      .hero-slide p {
+        font-size: 1.05rem !important;
+      }
+
+      /* Pain slide mobile */
+      .pain-slide h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1.75rem;
+      }
+
+      .pain-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      .pain-card {
+        padding: 1.75rem;
+      }
+
+      .pain-card .emoji {
+        font-size: 2.75rem;
+      }
+
+      .pain-card h3 {
+        font-size: 1.2rem;
+      }
+
+      .pain-card p {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      /* Numbers slide mobile */
+      .numbers-slide h2 {
+        font-size: 1.75rem;
+      }
+
+      .loss-amount {
+        font-size: 3.5rem;
+        margin: 2rem 0;
+      }
+
+      .loss-label {
+        font-size: 1.25rem;
+      }
+
+      .numbers-slide p {
+        font-size: 1.1rem !important;
+      }
+
+      /* Solution slide mobile */
+      .solution-slide h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .solution-slide > p {
+        font-size: 1.1rem !important;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      .feature-card {
+        padding: 1.75rem;
+      }
+
+      .feature-card .emoji {
+        font-size: 2.75rem;
+      }
+
+      .feature-card h3 {
+        font-size: 1.15rem;
+      }
+
+      .feature-card p {
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      /* Bonus slide mobile */
+      .bonus-slide h2 {
+        font-size: 2rem;
+      }
+
+      .bonus-slide > p {
+        font-size: 1.1rem !important;
+      }
+
+      .comparison {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        margin: 2rem auto;
+      }
+
+      .comparison-card {
+        padding: 1.75rem;
+      }
+
+      .comparison-card h3 {
+        font-size: 1.3rem !important;
+      }
+
+      .comparison-card p {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .comparison-time {
+        font-size: 2.75rem;
+      }
+
+      /* ROI slide mobile */
+      .roi-slide h2 {
+        font-size: 1.75rem;
+      }
+
+      .roi-slide > p {
+        font-size: 1.1rem !important;
+      }
+
+      .roi-stat {
+        padding: 1.75rem;
+      }
+
+      .roi-stat .label {
+        font-size: 1.1rem;
+      }
+
+      .roi-stat .amount {
+        font-size: 2.25rem;
+      }
+
+      .roi-percentage {
+        font-size: 3.5rem;
+      }
+
+      /* Pricing slide mobile */
+      .pricing-slide h2 {
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+      }
+
+      .timeline {
+        gap: 1.25rem;
+      }
+
+      .timeline-item {
+        padding: 1.75rem;
+      }
+
+      .timeline-item .period {
+        font-size: 1.3rem;
+      }
+
+      .timeline-item .price {
+        font-size: 2.25rem;
+      }
+
+      .timeline-item p {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      .timeline-item .savings {
+        font-size: 1.05rem;
+      }
+
+      /* Benefits slide mobile */
+      .benefits-slide h2 {
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+      }
+
+      .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      .benefit-card {
+        padding: 1.5rem;
+      }
+
+      .benefit-card .checkmark {
+        font-size: 2rem;
+      }
+
+      .benefit-card h3 {
+        font-size: 1.1rem;
+      }
+
+      .benefit-card p {
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      /* Responsibilities slide mobile */
+      .responsibilities-slide h2 {
+        font-size: 1.75rem;
+      }
+
+      .responsibilities-slide .subtitle {
+        font-size: 1.15rem;
+      }
+
+      .checklist-item {
+        padding: 1.5rem;
+        font-size: 1rem;
+      }
+
+      .checklist-item .checkbox {
+        font-size: 1.75rem;
+      }
+
+      /* Implementation slide mobile */
+      .implementation-slide h2 {
+        font-size: 1.75rem;
+      }
+
+      .implementation-slide > p {
+        font-size: 1.1rem !important;
+      }
+
+      .roadmap {
+        gap: 1.25rem;
+      }
+
+      .roadmap-item {
+        padding: 1.75rem;
+      }
+
+      .roadmap-item .week {
+        font-size: 1.1rem;
+      }
+
+      .roadmap-item h3 {
+        font-size: 1.3rem;
+      }
+
+      .roadmap-item ul {
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .roadmap-item ul li {
+        margin-bottom: 0.5rem;
+      }
+
+      /* Guarantee slide mobile */
+      .guarantee-slide h2 {
+        font-size: 1.75rem;
+      }
+
+      .guarantee-slide > p {
+        font-size: 1.1rem !important;
+      }
+
+      .guarantee-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+      }
+
+      .guarantee-card {
+        padding: 1.75rem;
+      }
+
+      .guarantee-card .emoji {
+        font-size: 2.75rem;
+      }
+
+      .guarantee-card h3 {
+        font-size: 1.2rem;
+      }
+
+      .guarantee-card p {
+        font-size: 1rem;
+        line-height: 1.5;
+      }
+
+      /* CTA slide mobile */
+      .cta-slide h2 {
+        font-size: 2rem;
+      }
+
+      .step {
+        padding: 1.25rem;
+        font-size: 1rem;
+      }
+
+      .step .number {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+
+      .urgency {
+        padding: 1.5rem;
+        font-size: 1.05rem;
+        line-height: 1.5;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 1rem;
+      }
+
+      .action-buttons a {
+        width: 100%;
+        min-height: 60px;
+        padding: 1.125rem 1.5rem;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Controls mobile - iPhone safe area */
+      #controls {
+        bottom: max(1.25rem, calc(var(--safe-area-inset-bottom) + 0.5rem));
+        padding: 1rem 1.75rem;
+        gap: 1.75rem;
+      }
+
+      #controls button {
+        width: 48px;
+        height: 48px;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+      }
+
+      #counter {
+        font-size: 1rem;
+        white-space: nowrap;
+      }
+    }
+
+    /* Extra small screens (iPhone SE, Mini) */
+    @media (max-width: 375px) {
+      .hero-slide h1 {
+        font-size: 2rem;
+      }
+
+      .hero-slide .subtitle {
+        font-size: 1.1rem;
+      }
+
+      .loss-amount {
+        font-size: 3rem;
+      }
+
+      .roi-percentage {
+        font-size: 3rem;
+      }
+
+      .comparison-time {
+        font-size: 2.5rem;
+      }
+
+      .timeline-item .price {
+        font-size: 2rem;
+      }
+
+      .cta-slide h2 {
+        font-size: 1.75rem;
+      }
+    }
+
+    /* Landscape orientation */
+    @media (max-width: 926px) and (orientation: landscape) {
+      .slide {
+        padding: max(1rem, var(--safe-area-inset-top)) max(1rem, var(--safe-area-inset-right)) max(5rem, var(--safe-area-inset-bottom)) max(1rem, var(--safe-area-inset-left));
+      }
+
+      .hero-slide h1,
+      .pain-slide h2,
+      .numbers-slide h2,
+      .solution-slide h2,
+      .bonus-slide h2,
+      .roi-slide h2,
+      .pricing-slide h2,
+      .benefits-slide h2,
+      .responsibilities-slide h2,
+      .implementation-slide h2,
+      .guarantee-slide h2,
+      .cta-slide h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .loss-amount {
+        font-size: 2.5rem;
+      }
+
+      .roi-percentage {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="slides">
+    <!-- Slide 1: Hero -->
+    <section class="slide hero-slide active" data-slide="1">
+      <div class="badge">🎯 FOUNDING CUSTOMER #1</div>
+      <h1>Welcome to an Exclusive Partnership</h1>
+      <p class="subtitle">A Once-in-a-Lifetime Opportunity</p>
+      <p style="max-width: 600px; opacity: 0.9; line-height: 1.6;">You're about to become the first beta customer of OrderPrep Business Tier. This proposal outlines an exceptional deal that will never be offered again.</p>
+      <button class="cta-button" onclick="nextSlide()">Tap to Begin →</button>
+    </section>
+
+    <!-- Slide 2: Pain Points -->
+    <section class="slide pain-slide" data-slide="2">
+      <h2>We See You...</h2>
+      <div class="pain-grid">
+        <div class="pain-card">
+          <div class="emoji">💸</div>
+          <h3>Payment Tracking Crisis</h3>
+          <p>Manual tracking of unpaid orders, customer credit, endless reminder follow-ups. <strong>2,000-3,000 AED lost monthly</strong>.</p>
+        </div>
+        <div class="pain-card">
+          <div class="emoji">⚡</div>
+          <h3>Flash Sale Margin Erosion</h3>
+          <p>Discounts eating into profits without ROI tracking. <strong>1,000-1,500 AED lost monthly</strong>.</p>
+        </div>
+        <div class="pain-card">
+          <div class="emoji">⏰</div>
+          <h3>Manual Order Entry Hell</h3>
+          <p>2-3 hours daily entering WhatsApp orders one by one. <strong>75 hours wasted monthly</strong>.</p>
+        </div>
+        <div class="pain-card">
+          <div class="emoji">🚫</div>
+          <h3>Growth Bottleneck</h3>
+          <p>Current systems can't scale to 100+ orders/day. <strong>Revenue ceiling reached</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 3: The Numbers -->
+    <section class="slide numbers-slide" data-slide="3">
+      <h2>The Numbers Don't Lie</h2>
+      <p class="loss-label">Current Monthly Losses:</p>
+      <div class="loss-amount">4,060 - 6,200 AED</div>
+      <p style="font-size: 1.3rem; max-width: 600px; opacity: 0.9;">Every month, your business is hemorrhaging thousands of AED through unpaid orders, untracked discounts, wasted groceries, and manual labor.</p>
+      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #fbbf24;">That's up to <span style="font-size: 2rem;">74,400 AED per year</span> bleeding out.</p>
+    </section>
+
+    <!-- Slide 4: Solution -->
+    <section class="slide solution-slide" data-slide="4">
+      <h2>Introducing OrderPrep Business Tier</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 3rem; opacity: 0.9;">Built specifically for businesses like yours</p>
+      <div class="features-grid">
+        <div class="feature-card" style="animation-delay: 0.1s;">
+          <div class="emoji">💰</div>
+          <h3>Advanced Payment Tracking</h3>
+          <p>3 reminder templates, credit history, risk indicators</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.2s;">
+          <div class="emoji">⚡</div>
+          <h3>Flash Sale Management</h3>
+          <p>Revenue loss tracking, discount analytics</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.3s;">
+          <div class="emoji">👥</div>
+          <h3>Multi-User Access</h3>
+          <p>Scale operations with your team</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.4s;">
+          <div class="emoji">📊</div>
+          <h3>Financial Reports</h3>
+          <p>Deep analytics and insights</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.5s;">
+          <div class="emoji">🧾</div>
+          <h3>Recipe Costing</h3>
+          <p>Inventory management and costing</p>
+        </div>
+        <div class="feature-card" style="animation-delay: 0.6s;">
+          <div class="emoji">🎯</div>
+          <h3>Priority Support</h3>
+          <p>Direct access to development team</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 5: Buyer Link Bonus -->
+    <section class="slide bonus-slide" data-slide="5">
+      <div class="bonus-badge">🎁 EXCLUSIVE BETA BONUS</div>
+      <h2 style="font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem;">Buyer Link System</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Early Access Feature - Only for Founding Customers</p>
+
+      <div class="comparison">
+        <div class="comparison-card before">
+          <h3 style="color: #dc2626; font-size: 1.5rem; margin-bottom: 1rem;">❌ Before</h3>
+          <div class="comparison-time" style="color: #dc2626;">2-3 hours</div>
+          <p>Manual WhatsApp order entry, copy-paste nightmare, endless typos, overwhelmed during rush hours</p>
+        </div>
+        <div class="comparison-card after">
+          <h3 style="color: #10b981; font-size: 1.5rem; margin-bottom: 1rem;">✅ After</h3>
+          <div class="comparison-time" style="color: #10b981;">10 minutes</div>
+          <p>Customers order via shareable link, automatic entry, real-time inventory, mobile-first experience</p>
+        </div>
+      </div>
+
+      <p style="font-size: 1.5rem; font-weight: 700; margin-top: 2rem;">90% reduction in manual work</p>
+    </section>
+
+    <!-- Slide 6: ROI Calculator -->
+    <section class="slide roi-slide" data-slide="6">
+      <h2>Return on Investment</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">Conservative estimates based on your business</p>
+
+      <div class="roi-grid">
+        <div class="roi-stat">
+          <div class="label">Monthly Benefit</div>
+          <div class="amount">2,926 - 4,680 AED</div>
+        </div>
+        <div class="roi-stat">
+          <div class="label">Year 1 Net Benefit</div>
+          <div class="amount">33,316 - 55,264 AED</div>
+        </div>
+        <div class="roi-stat">
+          <div class="label">Your Investment (Year 1)</div>
+          <div class="amount" style="font-size: 2rem;">895.50 AED</div>
+        </div>
+      </div>
+
+      <div class="roi-percentage">3,621% - 6,071% ROI</div>
+
+      <p style="font-size: 1.2rem; opacity: 0.9; max-width: 700px; margin: 0 auto;">For every 1 AED you invest, you get back 36-60 AED. This isn't an expense—it's the most profitable investment in your business.</p>
+    </section>
+
+    <!-- Slide 7: Pricing Timeline -->
+    <section class="slide pricing-slide" data-slide="7">
+      <h2>Enhanced Beta Deal Breakdown</h2>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="period">Months 1-3</div>
+          <div class="price free">100% FREE</div>
+          <p>Full access to Business Tier features. Direct feedback channel. Influence feature roadmap.</p>
+          <div class="savings">✨ Value: 597 AED</div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="period">Months 4-12</div>
+          <div class="price">99.50 AED/month</div>
+          <p><strong>50% OFF</strong> regular price of 199 AED. Early adopter pricing with priority support.</p>
+          <div class="savings">💰 Total Savings: 895.50 AED</div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="period">Month 13+ Forever</div>
+          <div class="price">139.30 AED/month</div>
+          <p><strong>Lifetime 30% Discount</strong> - Permanent founder pricing locked in forever. Price protection against future increases.</p>
+          <div class="savings">🎯 VIP Status Forever</div>
+        </div>
+      </div>
+
+      <p style="margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: var(--secondary);">Total Year 1 Savings: 1,492.50 AED</p>
+    </section>
+
+    <!-- Slide 8: Benefits -->
+    <section class="slide benefits-slide" data-slide="8">
+      <h2>Founding Customer Benefits</h2>
+
+      <div class="benefits-grid">
+        <div class="benefit-card" style="animation-delay: 0.1s;">
+          <div class="checkmark">✅</div>
+          <h3>Extended FREE Trial</h3>
+          <p>3 months full access (597 AED value)</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.2s;">
+          <div class="checkmark">✅</div>
+          <h3>50% Discount</h3>
+          <p>Months 4-12 (895.50 AED saved)</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.3s;">
+          <div class="checkmark">✅</div>
+          <h3>Lifetime 30% OFF</h3>
+          <p>Forever pricing at 139.30 AED/month</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.4s;">
+          <div class="checkmark">✅</div>
+          <h3>Buyer Link Early Access</h3>
+          <p>Beta feature (saves 2-3 hours daily)</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.5s;">
+          <div class="checkmark">✅</div>
+          <h3>Direct Developer Access</h3>
+          <p>Priority feature requests and support</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.6s;">
+          <div class="checkmark">✅</div>
+          <h3>Founding Customer Badge</h3>
+          <p>Recognition in our success story</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.7s;">
+          <div class="checkmark">✅</div>
+          <h3>Feature Roadmap Influence</h3>
+          <p>Help shape future development</p>
+        </div>
+
+        <div class="benefit-card" style="animation-delay: 0.8s;">
+          <div class="checkmark">✅</div>
+          <h3>Price Lock Guarantee</h3>
+          <p>Never pay more than 139.30 AED/month</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 9: Responsibilities -->
+    <section class="slide responsibilities-slide" data-slide="9">
+      <h2>What We Need From You</h2>
+      <p class="subtitle">It's a partnership, not just a purchase</p>
+
+      <div class="checklist">
+        <div class="checklist-item" style="animation-delay: 0.1s;">
+          <span class="checkbox">☑️</span>
+          <div>Use OrderPrep daily for business operations during months 1-3</div>
+        </div>
+
+        <div class="checklist-item" style="animation-delay: 0.2s;">
+          <span class="checkbox">☑️</span>
+          <div>Provide weekly feedback via WhatsApp/calls (15-30 min sessions)</div>
+        </div>
+
+        <div class="checklist-item" style="animation-delay: 0.3s;">
+          <span class="checkbox">☑️</span>
+          <div>Report bugs or usability issues immediately</div>
+        </div>
+
+        <div class="checklist-item" style="animation-delay: 0.4s;">
+          <span class="checkbox">☑️</span>
+          <div>Test new features as they roll out</div>
+        </div>
+
+        <div class="checklist-item" style="animation-delay: 0.5s;">
+          <span class="checkbox">☑️</span>
+          <div>Share honest testimonial after 90 days (if satisfied)</div>
+        </div>
+
+        <div class="checklist-item" style="animation-delay: 0.6s;">
+          <span class="checkbox">☑️</span>
+          <div>Optional: Reference for future customers</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 10: Implementation Timeline -->
+    <section class="slide implementation-slide" data-slide="10">
+      <h2>Implementation Timeline</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">You'll be live in 48 hours</p>
+
+      <div class="roadmap">
+        <div class="roadmap-item" style="animation-delay: 0.1s;">
+          <div class="week">Week 1</div>
+          <h3>Setup & Onboarding</h3>
+          <ul style="margin-left: 1.5rem; opacity: 0.9;">
+            <li>Personal training session (1-2 hours)</li>
+            <li>Data migration assistance (menu, customers, orders)</li>
+            <li>WhatsApp integration setup</li>
+            <li>Buyer Link system configuration</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-item" style="animation-delay: 0.2s;">
+          <div class="week">Week 2-4</div>
+          <h3>Active Beta Testing</h3>
+          <ul style="margin-left: 1.5rem; opacity: 0.9;">
+            <li>Daily usage and feedback collection</li>
+            <li>Feature refinement based on your workflow</li>
+            <li>Bug fixes and optimizations</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-item" style="animation-delay: 0.3s;">
+          <div class="week">Month 2-3</div>
+          <h3>Feature Enhancement</h3>
+          <ul style="margin-left: 1.5rem; opacity: 0.9;">
+            <li>Advanced features rollout</li>
+            <li>Custom workflow optimization</li>
+            <li>Scale preparation for 100+ orders/day</li>
+          </ul>
+        </div>
+
+        <div class="roadmap-item" style="animation-delay: 0.4s;">
+          <div class="week">Month 4+</div>
+          <h3>Transition to Paid</h3>
+          <ul style="margin-left: 1.5rem; opacity: 0.9;">
+            <li>Invoice for 99.50 AED/month (50% OFF)</li>
+            <li>Continued priority support</li>
+            <li>New features preview access</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 11: Guarantee -->
+    <section class="slide guarantee-slide" data-slide="11">
+      <h2>Risk Reversal & Guarantee</h2>
+      <p style="font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9;">All risk on us, all upside for you</p>
+
+      <div class="guarantee-grid">
+        <div class="guarantee-card" style="animation-delay: 0.1s;">
+          <div class="emoji">💯</div>
+          <h3>90-Day Money-Back</h3>
+          <p>Not satisfied after free beta? No obligation to continue. Zero risk.</p>
+        </div>
+
+        <div class="guarantee-card" style="animation-delay: 0.2s;">
+          <div class="emoji">🔒</div>
+          <h3>Data Ownership</h3>
+          <p>Your data stays yours forever. Export anytime, anywhere.</p>
+        </div>
+
+        <div class="guarantee-card" style="animation-delay: 0.3s;">
+          <div class="emoji">🚪</div>
+          <h3>No Lock-In</h3>
+          <p>Cancel anytime, keep your data. No contracts, no penalties.</p>
+        </div>
+
+        <div class="guarantee-card" style="animation-delay: 0.4s;">
+          <div class="emoji">🛡️</div>
+          <h3>Privacy Guarantee</h3>
+          <p>Local-only storage by default. No data sharing, ever.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Slide 12: CTA -->
+    <section class="slide cta-slide" data-slide="12">
+      <h2>Ready to Become Founding Customer #1?</h2>
+
+      <div class="steps">
+        <div class="step" style="animation-delay: 0.1s;">
+          <div class="number">1</div>
+          <div>Click "Start FREE 3 Months" below</div>
+        </div>
+
+        <div class="step" style="animation-delay: 0.2s;">
+          <div class="number">2</div>
+          <div>Schedule 30-min onboarding call (WhatsApp or Zoom)</div>
+        </div>
+
+        <div class="step" style="animation-delay: 0.3s;">
+          <div class="number">3</div>
+          <div>Start using OrderPrep within 48 hours</div>
+        </div>
+
+        <div class="step" style="animation-delay: 0.4s;">
+          <div class="number">4</div>
+          <div>Save 2-3 hours daily and recover thousands in lost revenue</div>
+        </div>
+      </div>
+
+      <div class="urgency">
+        ⚠️ <strong>Limited Offer:</strong> This Founding Beta deal is only available to you as Customer #1. Once we onboard our second customer, this pricing structure will never be offered again.
+      </div>
+
+      <div class="action-buttons">
+        <a href="https://wa.me/YOUR_PHONE_NUMBER?text=YES!%20I'm%20ready%20to%20become%20Founding%20Customer%20%231" class="whatsapp">
+          💬 Start Your FREE 3 Months
+        </a>
+        <a href="mailto:your-email@example.com?subject=Founding Customer Proposal - Questions" class="email">
+          📧 I Have Questions
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div id="controls">
+    <button id="prev" onclick="prevSlide()">←</button>
+    <span id="counter">1 / 12</span>
+    <button id="next" onclick="nextSlide()">→</button>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function updateSlide() {
+      const slides = document.querySelectorAll('.slide');
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'prev');
+        if (index + 1 === currentSlide) {
+          slide.classList.add('active');
+        } else if (index + 1 < currentSlide) {
+          slide.classList.add('prev');
+        }
+      });
+
+      document.getElementById('counter').textContent = `${currentSlide} / ${totalSlides}`;
+      document.getElementById('prev').disabled = currentSlide === 1;
+      document.getElementById('next').disabled = currentSlide === totalSlides;
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+
+    // Touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    document.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50) nextSlide();
+      if (touchEndX > touchStartX + 50) prevSlide();
+    }
+
+    // Initialize
+    updateSlide();
+  </script>
+</body>
+</html>
