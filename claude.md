@@ -436,6 +436,14 @@ npm run preview
 
 ### Phase 11: Founding Customer Proposal Presentations
 **Status**: ✅ **COMPLETE**
+
+### Phase 12: Recipe Ingredient Linking + Simplified Analytics + End-of-Day Management
+**Status**: 📋 **PLANNING COMPLETE - READY FOR IMPLEMENTATION**
+**Implementation Order:** Phase 12C → Phase 12A → Phase 12B
+**See:** `PHASE12_IMPLEMENTATION_PLAN.md` for detailed plan
+- ⏳ Phase 12C: End-of-Day Unsold Items Management (3-4 hours) - PRIORITY
+- ⏳ Phase 12A: Recipe Ingredient Linking with Cost Tracking (10-12 hours)
+- ⏳ Phase 12B: Simplified Business Analytics (4-5 hours)
 - ✅ Safari/iOS-optimized proposal with slide transitions
 - ✅ Simple swipe-based version (12 slides, no JavaScript complications)
 - ✅ All 12 slides with complete content:
