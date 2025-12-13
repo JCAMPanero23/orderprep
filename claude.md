@@ -475,10 +475,21 @@ npm run preview
 ### Technical Improvements
 - [ ] Service worker for offline-first
 - [ ] Push notifications
-- [ ] Advanced cloud sync
 - [ ] Mobile app version (React Native)
 - [ ] Dark mode
 - [ ] Analytics dashboard
+
+### Deferred Features (Future Enhancement)
+- [ ] **Cloud Data Sync for Multi-Device Access**
+  - **Status:** Deferred - Low priority for initial launch
+  - **Context:** Google Auth is fully implemented, but business data (orders, customers, payments, menus) currently stores in localStorage only
+  - **Current Behavior:** Users can login with Google on different devices, but data doesn't sync across devices. Each device has independent data.
+  - **Manual Workaround:** Users can backup/restore via email backup system to transfer data between devices
+  - **Future Implementation Options:**
+    1. Firebase Realtime Database - auto-sync all data, integrated with existing Google Auth
+    2. Firestore - more scalable, same auto-sync capability
+    3. Custom backend - more control but requires server infrastructure
+  - **Reason for Deferral:** Current target users (30-80 orders/day) primarily work from single location. Multi-device sync can be added in Business tier (multi-user phase)
 
 ---
 
