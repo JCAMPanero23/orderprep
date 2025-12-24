@@ -1,21 +1,27 @@
 // Supabase client configuration for OrderPrep backup system
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Supabase credentials not configured. Backup functionality will be limited.');
+// Only create Supabase client if credentials are configured
+let supabaseInstance: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false, // We handle auth separately
+      autoRefreshToken: false,
+    },
+  });
+  console.log('✅ Supabase client initialized successfully');
+} else {
+  console.warn('⚠️ Supabase credentials not configured. Cloud backup functionality will be disabled.');
 }
 
-// Create Supabase client instance
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false, // We handle auth separately
-    autoRefreshToken: false,
-  },
-});
+// Export Supabase client (can be null if not configured)
+export const supabase = supabaseInstance;
 
 // Storage bucket name
 export const BACKUP_BUCKET = 'orderprep-backups';

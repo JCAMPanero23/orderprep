@@ -110,6 +110,17 @@ async function uploadBackupToSupabase(data: BackupData, userId: string): Promise
   error?: string;
 }> {
   try {
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.warn('⚠️ Supabase not configured - skipping cloud backup');
+      return {
+        success: false,
+        size: 0,
+        path: '',
+        error: 'Supabase not configured',
+      };
+    }
+
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
     const size = blob.size;
@@ -174,6 +185,12 @@ export async function listUserBackups(userId?: string): Promise<Array<{
   isLatest: boolean;
 }>> {
   try {
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.warn('⚠️ Supabase not configured - no cloud backups available');
+      return [];
+    }
+
     // Get user ID if not provided
     const userIdToUse = userId || await getCurrentUserId();
     if (!userIdToUse) {
@@ -253,6 +270,12 @@ export async function listUserBackups(userId?: string): Promise<Array<{
  */
 export async function restoreFromSupabase(path: string): Promise<boolean> {
   try {
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.error('❌ Supabase not configured - cannot restore from cloud');
+      return false;
+    }
+
     console.log(`📥 Restoring backup from: ${path}`);
 
     // Download file from Supabase
@@ -321,6 +344,12 @@ export async function restoreFromSupabase(path: string): Promise<boolean> {
  */
 async function cleanupOldBackups(userId: string): Promise<number> {
   try {
+    // Check if Supabase is configured
+    if (!supabase) {
+      console.warn('⚠️ Supabase not configured - skipping cleanup');
+      return 0;
+    }
+
     const backups = await listUserBackups(userId);
 
     if (backups.length <= MAX_BACKUPS) {
