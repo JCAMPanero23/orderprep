@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Button, Modal } from '../components/UI';
 import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import { MapPin, CheckCircle, XCircle, ArrowUpDown, DollarSign, ClockIcon } from 'lucide-react';
 import { Order, SortOption } from '../types';
 import { generateWhatsAppReceipt, RECEIPT_TEMPLATES } from '../utils/receiptTemplates';
@@ -26,6 +27,12 @@ export const Reserved: React.FC = () => {
     isPaid: boolean;
   } | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState('friendly');
+
+  // Cancel Order Confirmation Modal State
+  const [confirmCancelModal, setConfirmCancelModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({ isOpen: false, order: null });
 
   // Sorting utility function
   const sortReservedOrders = (orders: Order[], sortOption: SortOption): Order[] => {
@@ -255,12 +262,7 @@ export const Reserved: React.FC = () => {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => {
-                        if (confirm(`Cancel order for ${order.customerName}?`)) {
-                          const reason = prompt('Reason (optional):') || 'Cancelled';
-                          cancelOrderWithReason(order.id, reason);
-                        }
-                      }}
+                      onClick={() => setConfirmCancelModal({ isOpen: true, order })}
                     >
                       <XCircle size={16} className="mr-1" /> Cancel
                     </Button>
@@ -345,6 +347,24 @@ export const Reserved: React.FC = () => {
         onTemplateChange={pendingHandOverAction?.isPaid ? handleTemplateChange : undefined}
         availableTemplates={pendingHandOverAction?.isPaid ? RECEIPT_TEMPLATES : undefined}
         currentTemplateId={pendingHandOverAction?.isPaid ? selectedTemplateId : undefined}
+      />
+
+      {/* Cancel Order Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmCancelModal.isOpen}
+        onClose={() => setConfirmCancelModal({ isOpen: false, order: null })}
+        onConfirm={async () => {
+          if (confirmCancelModal.order) {
+            const reason = prompt('Cancellation reason (optional):') || 'Cancelled';
+            cancelOrderWithReason(confirmCancelModal.order.id, reason);
+            setConfirmCancelModal({ isOpen: false, order: null });
+          }
+        }}
+        title="Cancel Reserved Order?"
+        message={`Cancel order for ${confirmCancelModal.order?.customerName}? Stock will be restored automatically.`}
+        confirmLabel="Yes, Cancel Order"
+        variant="danger"
+        isDangerous={true}
       />
     </div>
   );
