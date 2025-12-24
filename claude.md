@@ -668,8 +668,55 @@ npm run build
 dist/
 ```
 
-### Environment Variables (Optional)
-For EmailJS integration:
+### Environment Variables
+
+#### Required for Cloud Backups (Supabase)
+**IMPORTANT:** These variables are required for cloud backup functionality to work.
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+**How to get your Supabase credentials:**
+
+1. **Create a Supabase Project** (if you haven't already):
+   - Go to https://supabase.com
+   - Sign up / Log in
+   - Click "New Project"
+   - Enter project name: `orderprep-backups`
+   - Set a strong database password
+   - Choose region closest to your users (e.g., Singapore for Dubai)
+   - Click "Create new project" (takes ~2 minutes)
+
+2. **Get Your Credentials:**
+   - Go to Project Settings → API
+   - Copy **Project URL** → Use as `VITE_SUPABASE_URL`
+   - Copy **anon/public key** → Use as `VITE_SUPABASE_ANON_KEY`
+
+3. **Create Storage Bucket:**
+   - Go to Storage in left sidebar
+   - Click "New Bucket"
+   - Name: `orderprep-backups`
+   - Privacy: **Private** (important for security)
+   - Click "Create bucket"
+
+4. **Configure Vercel Environment Variables:**
+   - Go to https://vercel.com/dashboard
+   - Select your `orderprep` project
+   - Go to Settings → Environment Variables
+   - Add both variables above
+   - Click Save
+   - Redeploy your application
+
+**What happens without these variables:**
+- ✅ App still works perfectly (localStorage mode)
+- ❌ Cloud backup features disabled
+- ⚠️ Console warning: "Supabase not configured"
+- ℹ️ Settings page shows "Cloud backups unavailable"
+
+#### Optional - EmailJS (Legacy Backup)
+For email-based backups (legacy feature):
 ```
 VITE_EMAILJS_SERVICE_ID=your_service_id
 VITE_EMAILJS_TEMPLATE_ID=your_template_id
@@ -713,9 +760,9 @@ OrderPrep is a production-ready PWA that solves real problems for home food entr
 
 ---
 
-**Version:** 2.2.0
+**Version:** 2.2.1
 **Last Updated:** December 24, 2025
-**Status:** Production Ready ✅ (with Supabase Cloud Backups)
+**Status:** Production Ready ✅ (Deployed on Vercel with Supabase Cloud Backups)
 **Author:** Enhanced with Claude Code
 **Repository:** https://github.com/JCAMPanero23/orderprep
 
@@ -725,3 +772,19 @@ OrderPrep is a production-ready PWA that solves real problems for home food entr
 - ✅ Fixed critical data capture bug (localStorage keys)
 - ✅ Automatic daily cloud backups with 7-day retention
 - ✅ Enhanced type safety with AuthData interface
+
+### Version 2.2.1 - Deployment Fixes (December 24, 2025)
+**Critical Production Fixes:**
+- ✅ Fixed Vercel deployment failures (missing package-lock.json)
+- ✅ Removed import map conflict causing blank white page
+- ✅ Made Supabase optional to prevent crashes without credentials
+- ✅ Added graceful degradation to localStorage-only mode
+- ✅ Bundle size optimization: 581 KB → 410 KB (29% reduction)
+- ✅ Comprehensive environment variable documentation
+- ✅ Production deployment now fully stable on Vercel
+
+**Technical Details:**
+- Added `package-lock.json` to ensure consistent dependency versions
+- Removed CDN import map that conflicted with Vite bundling
+- Implemented null checks in all Supabase functions
+- App works perfectly with or without cloud backup credentials
