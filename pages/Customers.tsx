@@ -393,24 +393,32 @@ export const Customers: React.FC = () => {
       <ConfirmationModal
         isOpen={confirmDeleteModal.isOpen}
         onClose={() => setConfirmDeleteModal({ isOpen: false, customer: null })}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (!confirmDeleteModal.customer) return;
 
-          const result = deleteCustomer(confirmDeleteModal.customer.id);
+          const customerId = confirmDeleteModal.customer.id;
+          const customerName = confirmDeleteModal.customer.name;
+
+          // Check order count before deletion
+          const activeOrderCount = getActiveOrders(orders).filter(
+            o => o.customerId === customerId && o.paymentStatus === 'paid'
+          ).length;
+
+          const result = deleteCustomer(customerId);
 
           if (!result.success) {
             alert(result.error);
-            return;
+            throw new Error(result.error); // Prevent modal from closing
           }
 
-          const activeOrderCount = getActiveOrders(orders).filter(
-            o => o.customerId === confirmDeleteModal.customer!.id && o.paymentStatus === 'paid'
-          ).length;
-
+          // Close modal
           setConfirmDeleteModal({ isOpen: false, customer: null });
 
+          // Show success message after modal closes
           if (activeOrderCount > 0) {
-            alert(`Customer deleted. ${activeOrderCount} paid order(s) transferred to Walk-in Customer.`);
+            setTimeout(() => {
+              alert(`Customer "${customerName}" deleted. ${activeOrderCount} paid order(s) transferred to Walk-in Customer.`);
+            }, 100);
           }
         }}
         title="Delete Customer?"

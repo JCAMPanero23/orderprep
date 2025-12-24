@@ -353,12 +353,11 @@ export const Reserved: React.FC = () => {
       <ConfirmationModal
         isOpen={confirmCancelModal.isOpen}
         onClose={() => setConfirmCancelModal({ isOpen: false, order: null })}
-        onConfirm={async () => {
+        onConfirm={() => {
           if (confirmCancelModal.order) {
-            const reason = prompt('Cancellation reason (optional):') || 'Cancelled';
-            cancelOrderWithReason(confirmCancelModal.order.id, reason);
-            setConfirmCancelModal({ isOpen: false, order: null });
+            cancelOrderWithReason(confirmCancelModal.order.id, 'Cancelled by user');
           }
+          setConfirmCancelModal({ isOpen: false, order: null });
         }}
         title="Cancel Reserved Order?"
         message={`Cancel order for ${confirmCancelModal.order?.customerName}? Stock will be restored automatically.`}
