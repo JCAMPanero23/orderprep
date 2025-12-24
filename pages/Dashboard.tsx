@@ -3,6 +3,7 @@ import { useAppStore } from '../store';
 import { Card, Button, Modal } from '../components/UI';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Copy, Check, TrendingUp, AlertTriangle, Zap } from 'lucide-react';
+import { getActiveOrders, calculateUnpaidAmount, calculatePaidAmount } from '../utils/orderFilters';
 
 export const Dashboard: React.FC = () => {
   const { orders, menu, getRemainingStock, setFlashSale } = useAppStore();
@@ -16,12 +17,13 @@ export const Dashboard: React.FC = () => {
 
   // Stats Logic
   const today = new Date().toISOString().split('T')[0];
-  const todayOrders = orders.filter(o => o.deliveryDate.startsWith(today) && o.status !== 'cancelled');
-  const totalRevenue = orders.filter(o => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.totalAmount, 0);
-  const unpaidTotal = orders.filter(o => o.paymentStatus !== 'paid').reduce((sum, o) => sum + o.totalAmount, 0);
+  const activeOrders = getActiveOrders(orders);
+  const todayOrders = activeOrders.filter(o => o.deliveryDate.startsWith(today));
+  const totalRevenue = calculatePaidAmount(orders);
+  const unpaidTotal = calculateUnpaidAmount(orders);
 
-  // Flash Sale Impact
-  const flashSaleOrders = orders.filter(o => o.isFlashSale);
+  // Flash Sale Impact (only count active orders)
+  const flashSaleOrders = activeOrders.filter(o => o.isFlashSale);
   const totalFlashSaleLoss = flashSaleOrders.reduce((sum, o) => sum + (o.discountAmount || 0), 0);
   const flashSaleCountToday = todayOrders.filter(o => o.isFlashSale).length;
 

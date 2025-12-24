@@ -6,6 +6,7 @@ import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
 import { Check, MessageCircle, Clock, Search, Copy, Send, Eye, UserPlus } from 'lucide-react';
 import { Order, Customer, ReceiptTemplate } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
+import { calculateUnpaidAmount, calculatePaidAmount } from '../utils/orderFilters';
 
 // Payment Reminder Templates
 const REMINDER_TEMPLATES: ReceiptTemplate[] = [
@@ -192,13 +193,13 @@ export const Payments: React.FC = () => {
              <div className="bg-red-50 p-3 rounded-xl border border-red-100">
                 <p className="text-xs text-red-600 uppercase font-bold tracking-wider">Unpaid</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">
-                    {orders.filter(o => o.paymentStatus !== 'paid').reduce((sum, o) => sum + o.totalAmount, 0)} <span className="text-xs text-slate-500">AED</span>
+                    {calculateUnpaidAmount(orders)} <span className="text-xs text-slate-500">AED</span>
                 </p>
              </div>
              <div className="bg-green-50 p-3 rounded-xl border border-green-100">
                 <p className="text-xs text-green-600 uppercase font-bold tracking-wider">Collected</p>
                 <p className="text-2xl font-bold text-slate-900 mt-1">
-                    {orders.filter(o => o.paymentStatus === 'paid').reduce((sum, o) => sum + o.totalAmount, 0)} <span className="text-xs text-slate-500">AED</span>
+                    {calculatePaidAmount(orders)} <span className="text-xs text-slate-500">AED</span>
                 </p>
              </div>
         </div>

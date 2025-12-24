@@ -5,6 +5,7 @@ import { Card, Button, Input, Modal } from '../components/UI';
 import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban, Search, X } from 'lucide-react';
 import { Customer } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
+import { getActiveOrders } from '../utils/orderFilters';
 
 export const Customers: React.FC = () => {
   const { customers, updateCustomer, addCustomer, orders } = useAppStore();
@@ -75,7 +76,7 @@ export const Customers: React.FC = () => {
   };
 
   const getPaymentBehaviorBadge = (customer: Customer) => {
-    const unpaidOrders = orders.filter(o => o.customerName === customer.name && o.paymentStatus !== 'paid');
+    const unpaidOrders = getActiveOrders(orders).filter(o => o.customerName === customer.name && o.paymentStatus !== 'paid');
     const unpaidTotal = unpaidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
     if (unpaidTotal === 0) {
@@ -89,7 +90,7 @@ export const Customers: React.FC = () => {
   };
 
   const getCustomerUnpaid = (customerName: string) => {
-    return orders
+    return getActiveOrders(orders)
       .filter(o => o.customerName === customerName && o.paymentStatus !== 'paid')
       .reduce((sum, o) => sum + o.totalAmount, 0);
   };
@@ -319,7 +320,7 @@ export const Customers: React.FC = () => {
         const customer = customers.find(c => c.id === viewingHistoryId);
         if (!customer) return null;
 
-        const customerOrders = orders.filter(o => o.customerName === customer.name).sort((a, b) =>
+        const customerOrders = getActiveOrders(orders).filter(o => o.customerName === customer.name).sort((a, b) =>
           new Date(b.deliveryDate).getTime() - new Date(a.deliveryDate).getTime()
         );
         const unpaidCount = customerOrders.filter(o => o.paymentStatus !== 'paid').length;

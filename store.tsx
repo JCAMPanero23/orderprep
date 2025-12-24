@@ -173,6 +173,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const cancelOrderWithReason = (id: string, reason: string, itemIds?: string[]) => {
+    const order = state.orders.find(o => o.id === id);
+    if (!order) return;
+
+    // Restore stock for all items in the order
+    order.items.forEach(item => {
+      const menuItem = state.menu.find(m => m.id === item.menuItemId);
+      if (menuItem && menuItem.dailyLimit !== undefined) {
+        updateMenu(item.menuItemId, {
+          dailyLimit: menuItem.dailyLimit + item.quantity
+        });
+      }
+    });
+
+    // Mark order as cancelled
     updateOrder(id, {
       status: 'cancelled',
       cancelledAt: new Date().toISOString(),
