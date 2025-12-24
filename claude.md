@@ -139,7 +139,8 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
 - **No backend required** - Fully client-side
 
 ### Cloud Integration (Optional)
-- **EmailJS** - Email-based backup delivery
+- **Supabase** - Cloud backup storage with privacy-first design
+- **EmailJS** - Email-based backup delivery (legacy)
 - **Firebase** - Optional cloud sync (future)
 
 ### Build Tools
@@ -346,24 +347,34 @@ npm run preview
 
 ## 💾 Backup System
 
+### Cloud Storage (Supabase)
+- **Cloud-based backups** stored in Supabase Storage
+- **Privacy-first design** - Only current user data (no all_users array)
+- **Automatic daily backups** with manual backup option
+- **Backup retention** - Keeps last 7 backups automatically
+- **Secure download/restore** from Supabase with timestamp tracking
+
 ### Automatic Backups
-- Daily scheduled backups (default)
-- Email delivery via EmailJS
-- Backup history tracking
-- One-click restore
+- Daily scheduled backups (default) or manual via Settings
+- Cloud storage in Supabase with file versioning
+- Backup history tracking (shows last 7 days)
+- One-click restore functionality
 
 ### Backup Contents
-- All orders and customers
-- Menu items and pricing
-- Payment records
-- Settings and preferences
-- All app state
+- ✅ All orders and customers
+- ✅ Menu items and pricing
+- ✅ Payment records
+- ✅ Settings and preferences
+- ✅ All app state (orders, menu, customers, inventory, flash sales)
+- ✅ User authentication data
+- ❌ No all_users array (privacy protection)
 
 ### Recovery Process
-1. Navigate to Settings > Backup
-2. Select backup date from history
-3. Confirm restore (overwrites current data)
-4. Auto-reload app with restored data
+1. Navigate to Settings > Cloud Backups
+2. Select backup from "Your Backups (Last 7 Days)"
+3. Click Restore button
+4. Confirm restore (overwrites current data)
+5. Auto-reload app with restored data
 
 ---
 
@@ -465,6 +476,38 @@ npm run preview
 - ✅ WhatsApp-shareable URLs (not file-based)
 
 **Key Learning**: WhatsApp strips JavaScript from shared HTML files. Solution: Host on proper web server and share URLs instead of files.
+
+### Phase 13: Supabase Cloud Backup Integration
+**Status**: ✅ **COMPLETE**
+- ✅ **Privacy Fix** - Removed `allUsers` array from backups (security improvement)
+  - Each user now backs up only their own data
+  - Prevents accidental data exposure when sharing devices
+  - Updated `AuthData` interface with optional backward compatibility
+- ✅ **Data Capture Fix** - Fixed localStorage key mismatch (critical bug)
+  - Corrected keys: `orderprep_orders`, `orderprep_menu`, `orderprep_customers`, etc.
+  - Backups now correctly capture all business data (orders, customers, menu items, inventory, flash sales)
+  - Fixed both export and restore functions to use correct keys
+- ✅ **Supabase Integration**
+  - Cloud storage for automatic daily backups
+  - Last 7 backups retained automatically
+  - User-friendly Settings > Cloud Backups interface
+  - One-click restore functionality with timestamp tracking
+- ✅ **Type Safety Improvements**
+  - Created proper `AuthData` interface in backupTypes.ts
+  - Enhanced type definitions for better code quality
+- ✅ **Testing & Verification**
+  - Verified backups capture all data (orders, customers, menus, etc.)
+  - Confirmed privacy fix (no allUsers in backup JSON)
+  - Tested restore functionality with live data
+
+**Files Modified:**
+- `utils/backupSystem.ts` - Fixed export/restore key names, removed allUsers
+- `utils/backupTypes.ts` - Added AuthData interface, made allUsers optional
+- `utils/supabaseClient.ts` - Supabase integration client
+- `utils/userIdGenerator.ts` - User ID generation utilities
+- `components/BackupSettings.tsx` - Cloud backup UI
+
+**Impact:** Backups now work reliably with all business data, while maintaining strong privacy protection for users.
 
 ---
 
@@ -670,8 +713,15 @@ OrderPrep is a production-ready PWA that solves real problems for home food entr
 
 ---
 
-**Version:** 2.1.0
-**Last Updated:** December 13, 2025
-**Status:** Production Ready ✅ (with Founding Customer Proposals)
+**Version:** 2.2.0
+**Last Updated:** December 24, 2025
+**Status:** Production Ready ✅ (with Supabase Cloud Backups)
 **Author:** Enhanced with Claude Code
 **Repository:** https://github.com/JCAMPanero23/orderprep
+
+### Version 2.2.0 Highlights (December 24, 2025)
+- ✅ Phase 13: Supabase Cloud Backup Integration complete
+- ✅ Privacy-first backup system (removed allUsers array)
+- ✅ Fixed critical data capture bug (localStorage keys)
+- ✅ Automatic daily cloud backups with 7-day retention
+- ✅ Enhanced type safety with AuthData interface
