@@ -1,21 +1,20 @@
-// OrderPrep Backup System - Dual backup with EmailJS integration
+// OrderPrep Backup System - Supabase Cloud Storage Integration
 
-import emailjs from '@emailjs/browser';
-import type { BackupData, BackupMetadata } from './backupTypes';
+import { supabase, BACKUP_BUCKET } from './supabaseClient';
+import { getCurrentUserId } from './userIdGenerator';
+import type { BackupData, BackupMetadata, AuthData } from './backupTypes';
 
 // ============================================
 // CONFIGURATION
 // ============================================
 
-const DEVELOPER_EMAIL = import.meta.env.VITE_DEVELOPER_EMAIL || 'your-email@gmail.com';
-const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
-const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
-const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
-
-// Storage keys
+// Storage keys for localStorage metadata
 const LAST_BACKUP_DATE_KEY = 'lastBackupDate';
 const BACKUP_COUNT_KEY = 'totalBackups';
 const LAST_BACKUP_SIZE_KEY = 'lastBackupSize';
+
+// Backup retention policy
+const MAX_BACKUPS = 7; // Keep last 7 backups
 
 // ============================================
 // BACKUP METADATA
@@ -69,7 +68,7 @@ export function exportAllData(): BackupData {
     version: '1.0',
     exportDate: new Date().toISOString(),
 
-    // User info (for developer reference)
+    // User info (for metadata)
     userInfo: {
       businessName: user?.businessName || 'Unknown Business',
       userEmail: user?.email || 'no-email@unknown.com',
@@ -77,20 +76,20 @@ export function exportAllData(): BackupData {
       lastActive: new Date().toISOString(),
     },
 
-    // All business data
-    orders: JSON.parse(localStorage.getItem('orders') || '[]'),
-    customers: JSON.parse(localStorage.getItem('customers') || '[]'),
-    recipes: JSON.parse(localStorage.getItem('recipes') || '[]'),
-    menuItems: JSON.parse(localStorage.getItem('menuItems') || '[]'),
-    ingredients: JSON.parse(localStorage.getItem('ingredients') || '[]'),
-    flashSales: JSON.parse(localStorage.getItem('flashSales') || '[]'),
-    settings: JSON.parse(localStorage.getItem('settings') || '{}'),
+    // All business data (using correct localStorage keys with 'orderprep_' prefix)
+    orders: JSON.parse(localStorage.getItem('orderprep_orders') || '[]'),
+    customers: JSON.parse(localStorage.getItem('orderprep_customers') || '[]'),
+    recipes: JSON.parse(localStorage.getItem('orderprep_recipes') || '[]'),
+    menuItems: JSON.parse(localStorage.getItem('orderprep_menu') || '[]'),
+    ingredients: JSON.parse(localStorage.getItem('orderprep_inventory') || '[]'),
+    flashSales: JSON.parse(localStorage.getItem('orderprep_flashsale') || '[]'),
+    settings: JSON.parse(localStorage.getItem('orderprep_settings') || '{}'),
 
-    // Include auth data for full backup
+    // Include auth data for full backup (only current user for privacy)
     authData: {
       user: user,
       hasCompletedIntro: localStorage.getItem('has_completed_intro'),
-      allUsers: JSON.parse(localStorage.getItem('all_users') || '[]'),
+      // allUsers removed for privacy - each user backs up only their own data
     },
   };
 
@@ -98,100 +97,260 @@ export function exportAllData(): BackupData {
 }
 
 // ============================================
-// USER BACKUP: Download to device
+// SUPABASE BACKUP FUNCTIONS
 // ============================================
 
-function downloadBackupToDevice(data: BackupData, filename: string): void {
+/**
+ * Upload backup to Supabase Storage
+ */
+async function uploadBackupToSupabase(data: BackupData, userId: string): Promise<{
+  success: boolean;
+  size: number;
+  path: string;
+  error?: string;
+}> {
   try {
     const jsonString = JSON.stringify(data, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json' });
+    const size = blob.size;
 
-    // Track size
-    setLastBackupSize(blob.size);
+    // Generate filename: YYYY-MM-DD_HH-MM-SS.json (with timestamp for uniqueness)
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); // HH-MM-SS
+    const filename = `${dateStr}_${timeStr}.json`;
+    const filePath = `${userId}/${filename}`;
 
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
+    console.log(`📤 Uploading backup to Supabase: ${filePath} (${formatBytes(size)})`);
 
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+    // Upload to Supabase Storage
+    const { data: uploadData, error } = await supabase.storage
+      .from(BACKUP_BUCKET)
+      .upload(filePath, blob, {
+        contentType: 'application/json',
+        upsert: false, // Create new file each time
+      });
 
-    console.log('✅ Backup downloaded to device:', filename);
-  } catch (error) {
-    console.error('❌ Failed to download backup:', error);
-    throw error;
+    if (error) {
+      console.error('❌ Supabase upload error:', error);
+      return {
+        success: false,
+        size: 0,
+        path: '',
+        error: error.message,
+      };
+    }
+
+    console.log('✅ Backup uploaded to Supabase successfully');
+    setLastBackupSize(size);
+
+    return {
+      success: true,
+      size,
+      path: uploadData.path,
+    };
+
+  } catch (error: any) {
+    console.error('❌ Failed to upload backup:', error);
+    return {
+      success: false,
+      size: 0,
+      path: '',
+      error: error.message || 'Unknown error',
+    };
   }
 }
 
-// ============================================
-// DEVELOPER BACKUP: Silent email
-// ============================================
-
-async function sendBackupToDeveloper(data: BackupData): Promise<boolean> {
-  // Check if EmailJS is configured
-  if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
-    console.warn('⚠️ EmailJS not configured. Skipping developer backup.');
-    return false;
-  }
-
+/**
+ * List all user's backups from Supabase
+ */
+export async function listUserBackups(userId?: string): Promise<Array<{
+  filename: string;
+  date: string;
+  time: string;
+  size: number;
+  sizeFormatted: string;
+  path: string;
+  isLatest: boolean;
+}>> {
   try {
-    const businessName = data.userInfo?.businessName || 'Unknown Business';
-    const userEmail = data.userInfo?.userEmail || 'no-email@unknown.com';
-    const orderCount = data.orders?.length || 0;
-    const customerCount = data.customers?.length || 0;
-    const recipeCount = data.recipes?.length || 0;
+    // Get user ID if not provided
+    const userIdToUse = userId || await getCurrentUserId();
+    if (!userIdToUse) {
+      console.error('❌ No user ID available');
+      return [];
+    }
 
-    const now = new Date();
-    const backupDate = now.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    const backupTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    console.log(`📋 Listing backups for user: ${userIdToUse}`);
 
-    // Prepare email data
-    const emailData = {
-      to_email: DEVELOPER_EMAIL,
-      business_name: businessName,
-      user_email: userEmail,
-      backup_date: backupDate,
-      backup_time: backupTime,
-      order_count: orderCount.toString(),
-      customer_count: customerCount.toString(),
-      recipe_count: recipeCount.toString(),
-      backup_json: JSON.stringify(data, null, 2), // Full backup as JSON
-    };
+    // List files in user's folder
+    const { data: files, error } = await supabase.storage
+      .from(BACKUP_BUCKET)
+      .list(userIdToUse, {
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
 
-    // Send via EmailJS
-    const response = await emailjs.send(
-      EMAILJS_SERVICE_ID,
-      EMAILJS_TEMPLATE_ID,
-      emailData,
-      EMAILJS_PUBLIC_KEY
-    );
+    if (error) {
+      console.error('❌ Error listing backups:', error);
+      return [];
+    }
 
-    if (response.status === 200) {
-      console.log('✅ Backup sent to developer email');
-      return true;
-    } else {
-      console.error('❌ EmailJS returned non-200 status:', response.status);
+    if (!files || files.length === 0) {
+      console.log('ℹ️ No backups found');
+      return [];
+    }
+
+    // Parse and format backup list
+    const backups = files
+      .filter(file => file.name.endsWith('.json'))
+      .map((file, index) => {
+        // Extract date and time from filename (YYYY-MM-DD_HH-MM-SS.json)
+        const filenamePart = file.name.replace('.json', '');
+        const [datePart, timePart] = filenamePart.split('_');
+
+        // Parse date (YYYY-MM-DD)
+        const dateObj = new Date(datePart);
+
+        // Parse time (HH-MM-SS) if available
+        let timeStr = 'Unknown';
+        if (timePart) {
+          const [hours, minutes, seconds] = timePart.split('-');
+          const tempDate = new Date();
+          tempDate.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds));
+          timeStr = tempDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+          });
+        }
+
+        return {
+          filename: file.name,
+          date: dateObj.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          time: timeStr,
+          size: file.metadata?.size || 0,
+          sizeFormatted: formatBytes(file.metadata?.size || 0),
+          path: `${userIdToUse}/${file.name}`,
+          isLatest: index === 0, // First item is latest
+        };
+      });
+
+    console.log(`✅ Found ${backups.length} backup(s)`);
+    return backups;
+
+  } catch (error) {
+    console.error('❌ Failed to list backups:', error);
+    return [];
+  }
+}
+
+/**
+ * Restore backup from Supabase
+ */
+export async function restoreFromSupabase(path: string): Promise<boolean> {
+  try {
+    console.log(`📥 Restoring backup from: ${path}`);
+
+    // Download file from Supabase
+    const { data, error } = await supabase.storage
+      .from(BACKUP_BUCKET)
+      .download(path);
+
+    if (error) {
+      console.error('❌ Error downloading backup:', error);
       return false;
     }
 
+    if (!data) {
+      console.error('❌ No data received from Supabase');
+      return false;
+    }
+
+    // Parse JSON
+    const text = await data.text();
+    const backupData: BackupData = JSON.parse(text);
+
+    // Validate backup data structure
+    if (!backupData.version || !backupData.exportDate) {
+      throw new Error('Invalid backup file format');
+    }
+
+    // Restore all data to localStorage (using correct keys with 'orderprep_' prefix)
+    console.log('📝 Restoring data to localStorage...');
+    console.log('- Orders:', backupData.orders?.length || 0);
+    console.log('- Customers:', backupData.customers?.length || 0);
+    console.log('- Recipes:', backupData.recipes?.length || 0);
+    console.log('- Menu Items:', backupData.menuItems?.length || 0);
+
+    localStorage.setItem('orderprep_orders', JSON.stringify(backupData.orders || []));
+    localStorage.setItem('orderprep_customers', JSON.stringify(backupData.customers || []));
+    localStorage.setItem('orderprep_recipes', JSON.stringify(backupData.recipes || []));
+    localStorage.setItem('orderprep_menu', JSON.stringify(backupData.menuItems || []));
+    localStorage.setItem('orderprep_inventory', JSON.stringify(backupData.ingredients || []));
+    localStorage.setItem('orderprep_flashsale', JSON.stringify(backupData.flashSales || []));
+    localStorage.setItem('orderprep_settings', JSON.stringify(backupData.settings || {}));
+
+    // Restore auth data if present (only current user for privacy)
+    if (backupData.authData) {
+      console.log('📝 Restoring auth data...');
+      if (backupData.authData.user) {
+        localStorage.setItem('user', JSON.stringify(backupData.authData.user));
+      }
+      if (backupData.authData.hasCompletedIntro) {
+        localStorage.setItem('has_completed_intro', backupData.authData.hasCompletedIntro);
+      }
+      // allUsers is no longer restored - privacy fix
+      // Old backups with allUsers will be ignored
+    }
+
+    console.log('✅ Backup restored successfully! Data written to localStorage.');
+    return true;
+
   } catch (error) {
-    console.error('❌ Failed to send backup to developer:', error);
+    console.error('❌ Failed to restore backup:', error);
     return false;
+  }
+}
+
+/**
+ * Cleanup old backups (keep only last MAX_BACKUPS)
+ */
+async function cleanupOldBackups(userId: string): Promise<number> {
+  try {
+    const backups = await listUserBackups(userId);
+
+    if (backups.length <= MAX_BACKUPS) {
+      console.log(`ℹ️ Only ${backups.length} backups, no cleanup needed`);
+      return 0;
+    }
+
+    // Get backups to delete (oldest ones)
+    const backupsToDelete = backups.slice(MAX_BACKUPS);
+
+    console.log(`🗑️ Deleting ${backupsToDelete.length} old backup(s)...`);
+
+    // Delete old backups
+    for (const backup of backupsToDelete) {
+      const { error } = await supabase.storage
+        .from(BACKUP_BUCKET)
+        .remove([backup.path]);
+
+      if (error) {
+        console.error(`❌ Failed to delete ${backup.path}:`, error);
+      } else {
+        console.log(`✅ Deleted: ${backup.filename}`);
+      }
+    }
+
+    return backupsToDelete.length;
+
+  } catch (error) {
+    console.error('❌ Failed to cleanup old backups:', error);
+    return 0;
   }
 }
 
@@ -199,26 +358,32 @@ async function sendBackupToDeveloper(data: BackupData): Promise<boolean> {
 // MAIN BACKUP FUNCTION
 // ============================================
 
-export async function performDualBackup(userInitiated = false): Promise<boolean> {
+export async function performBackup(userInitiated = false): Promise<boolean> {
   // Check if backup needed (skip check for manual backups)
   if (!userInitiated && !needsBackup()) {
     console.log('ℹ️ Backup already done today. Skipping.');
     return true;
   }
 
+  // Get user ID
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    console.error('❌ No user logged in. Cannot perform backup.');
+    return false;
+  }
+
   try {
-    console.log('🔄 Starting dual backup...');
+    console.log('🔄 Starting cloud backup...');
 
     // Export all data
     const data = exportAllData();
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const filename = `orderprep-backup-${timestamp}.json`;
 
-    // 1. Download to user's device
-    downloadBackupToDevice(data, filename);
+    // Upload to Supabase
+    const result = await uploadBackupToSupabase(data, userId);
 
-    // 2. Send to developer email (silently in background)
-    const emailSent = await sendBackupToDeveloper(data);
+    if (!result.success) {
+      throw new Error(result.error || 'Upload failed');
+    }
 
     // Update metadata
     if (!userInitiated) {
@@ -226,7 +391,13 @@ export async function performDualBackup(userInitiated = false): Promise<boolean>
     }
     incrementBackupCount();
 
-    console.log(`✅ Dual backup complete! (Email sent: ${emailSent ? 'Yes' : 'No'})`);
+    // Cleanup old backups
+    const deletedCount = await cleanupOldBackups(userId);
+    if (deletedCount > 0) {
+      console.log(`🗑️ Cleaned up ${deletedCount} old backup(s)`);
+    }
+
+    console.log('✅ Cloud backup complete!');
     return true;
 
   } catch (error) {
@@ -245,7 +416,7 @@ export function initAutoBackup(): void {
   // Wait 5 seconds after app loads to avoid interfering with startup
   setTimeout(async () => {
     console.log('🔄 Running automatic backup check...');
-    await performDualBackup(false);
+    await performBackup(false);
   }, 5000);
 }
 
@@ -255,52 +426,7 @@ export function initAutoBackup(): void {
 
 export async function manualBackup(): Promise<boolean> {
   console.log('🔄 Manual backup triggered by user...');
-  return await performDualBackup(true);
-}
-
-// ============================================
-// DATA IMPORT/RESTORE
-// ============================================
-
-export async function importBackupData(file: File): Promise<boolean> {
-  try {
-    const text = await file.text();
-    const data: BackupData = JSON.parse(text);
-
-    // Validate backup data structure
-    if (!data.version || !data.exportDate) {
-      throw new Error('Invalid backup file format');
-    }
-
-    // Restore all data to localStorage
-    localStorage.setItem('orders', JSON.stringify(data.orders || []));
-    localStorage.setItem('customers', JSON.stringify(data.customers || []));
-    localStorage.setItem('recipes', JSON.stringify(data.recipes || []));
-    localStorage.setItem('menuItems', JSON.stringify(data.menuItems || []));
-    localStorage.setItem('ingredients', JSON.stringify(data.ingredients || []));
-    localStorage.setItem('flashSales', JSON.stringify(data.flashSales || []));
-    localStorage.setItem('settings', JSON.stringify(data.settings || {}));
-
-    // Restore auth data if present
-    if (data.authData) {
-      if (data.authData.user) {
-        localStorage.setItem('user', JSON.stringify(data.authData.user));
-      }
-      if (data.authData.hasCompletedIntro) {
-        localStorage.setItem('has_completed_intro', data.authData.hasCompletedIntro);
-      }
-      if (data.authData.allUsers) {
-        localStorage.setItem('all_users', JSON.stringify(data.authData.allUsers));
-      }
-    }
-
-    console.log('✅ Backup restored successfully!');
-    return true;
-
-  } catch (error) {
-    console.error('❌ Failed to import backup:', error);
-    return false;
-  }
+  return await performBackup(true);
 }
 
 // ============================================

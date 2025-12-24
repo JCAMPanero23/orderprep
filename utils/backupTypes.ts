@@ -1,5 +1,11 @@
 // Backup system TypeScript interfaces
 
+export interface AuthData {
+  user: any;
+  hasCompletedIntro: string | null;
+  allUsers?: any[]; // Optional - for backward compatibility with old backups
+}
+
 export interface BackupData {
   version: string;
   exportDate: string;
@@ -11,7 +17,7 @@ export interface BackupData {
   ingredients: any[];
   flashSales: any[];
   settings: any;
-  authData: any; // Include auth state for full backup
+  authData: AuthData; // Only current user data (privacy-first)
 }
 
 export interface UserInfo {
