@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Input, Modal } from '../components/UI';
-import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban } from 'lucide-react';
+import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban, Search, X } from 'lucide-react';
 import { Customer } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
 
@@ -20,6 +20,7 @@ export const Customers: React.FC = () => {
     building: '',
     location: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const startEdit = (c: Customer) => {
       setEditingId(c.id);
@@ -93,6 +94,20 @@ export const Customers: React.FC = () => {
       .reduce((sum, o) => sum + o.totalAmount, 0);
   };
 
+  // Filter customers based on search query
+  const filteredCustomers = customers.filter(customer => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+
+    return (
+      customer.name.toLowerCase().includes(query) ||
+      customer.phone.toLowerCase().includes(query) ||
+      (customer.unitNumber && customer.unitNumber.toLowerCase().includes(query)) ||
+      (customer.floor && customer.floor.toLowerCase().includes(query)) ||
+      (customer.building && customer.building.toLowerCase().includes(query))
+    );
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -105,8 +120,35 @@ export const Customers: React.FC = () => {
         </Button>
       </div>
 
+      {/* Search Bar */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 -mx-4 mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search by name, phone, unit, floor, building..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-sm text-gray-600 mt-2">
+            Found {filteredCustomers.length} of {customers.length} customers
+          </p>
+        )}
+      </div>
+
       <div className="space-y-3">
-        {customers.map(c => {
+        {filteredCustomers.map(c => {
           const badge = getPaymentBehaviorBadge(c);
           const unpaid = getCustomerUnpaid(c.name);
           const BadgeIcon = badge.icon;
