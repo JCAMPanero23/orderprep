@@ -39,6 +39,9 @@ export const Orders: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState('friendly');
   const [isSoldOutMessage, setIsSoldOutMessage] = useState(false); // Track if sending sold-out message
 
+  // Pending Order State (for deferring order creation until WhatsApp confirmation)
+  const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
+
   // Filter menu for available items
   const availableMenu = menu.filter(m => m.isAvailable && (m.dailyLimit || 0) > 0);
 
@@ -162,11 +165,10 @@ export const Orders: React.FC = () => {
         customerBuilding: customerBuilding.trim() || undefined
     };
 
-    addOrder(newOrder);
-
-    // Skip WhatsApp workflow for walk-in customers
+    // CHANGE: For walk-in customers, create order immediately (no WhatsApp)
     if (isWalkInOrder) {
-      // For walk-in customers, just clear the cart and form immediately
+      addOrder(newOrder);
+      // Clear cart and form
       setCart([]);
       setCustomerName('');
       setCustomerPhone('');
@@ -177,6 +179,9 @@ export const Orders: React.FC = () => {
       setFlashSaleDiscount(5);
       return;
     }
+
+    // CHANGE: For non-walk-in, store as pending (don't save yet)
+    setPendingOrder(newOrder);
 
     // Generate WhatsApp confirmation message
     // Use simple message for reservations, full receipt for completed orders
@@ -192,7 +197,30 @@ export const Orders: React.FC = () => {
     setIsSoldOutMessage(false); // This is an order confirmation, not a sold-out message
     setWhatsappSendModalOpen(true);
 
-    // Don't clear cart yet - wait for WhatsApp confirmation
+    // DON'T call addOrder() here for non-walk-in
+    // DON'T clear cart here - wait for WhatsApp confirmation
+  };
+
+  // NEW: Handle WhatsApp confirmation (order confirmed)
+  const handleWhatsAppConfirmed = () => {
+    if (!pendingOrder) return;
+
+    // NOW create the order
+    addOrder(pendingOrder);
+
+    // Clear pending order
+    setPendingOrder(null);
+
+    // Modal will handle cart clearing via existing logic
+  };
+
+  // NEW: Handle WhatsApp cancellation (user cancelled)
+  const handleWhatsAppCancelled = () => {
+    // Discard pending order without saving
+    setPendingOrder(null);
+
+    // Keep cart and customer selection intact
+    // User can edit and try again
   };
 
   const handleParseWhatsAppOrder = () => {
@@ -301,6 +329,9 @@ export const Orders: React.FC = () => {
       // For sold-out messages, just close the modal - don't clear cart
       setIsSoldOutMessage(false);
     } else if (pendingOrderAction) {
+      // CHANGE: Call parent's confirm callback BEFORE clearing
+      handleWhatsAppConfirmed();
+
       // For order confirmations, clear cart and form
       setCart([]);
       setCustomerName('');
@@ -821,7 +852,10 @@ export const Orders: React.FC = () => {
       {/* WhatsApp Send Modal */}
       <WhatsAppSendModal
         isOpen={whatsappSendModalOpen}
-        onClose={() => setWhatsappSendModalOpen(false)}
+        onClose={() => {
+          handleWhatsAppCancelled();
+          setWhatsappSendModalOpen(false);
+        }}
         message={orderConfirmationMessage}
         customerPhone={customerPhone}
         customerName={customerName || 'Customer'}
