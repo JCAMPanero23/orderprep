@@ -98,6 +98,8 @@ export interface Order {
   customerUnit?: string;
   customerBuilding?: string;
   customerFloor?: string;
+  // Customer transfer tracking
+  transferredFrom?: string; // Original customer name if order was transferred
 }
 
 export interface ShoppingListItem {

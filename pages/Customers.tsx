@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Card, Button, Input, Modal } from '../components/UI';
-import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban, Search, X } from 'lucide-react';
+import { Users, Phone, MapPin, Edit2, AlertTriangle, CheckCircle, Clock, Ban, Search, X, Trash2 } from 'lucide-react';
 import { Customer } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
 import { getActiveOrders } from '../utils/orderFilters';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 
 export const Customers: React.FC = () => {
-  const { customers, updateCustomer, addCustomer, orders } = useAppStore();
+  const { customers, updateCustomer, addCustomer, deleteCustomer, orders } = useAppStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Customer>>({});
   const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
@@ -22,6 +23,10 @@ export const Customers: React.FC = () => {
     location: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState<{
+    isOpen: boolean;
+    customer: Customer | null;
+  }>({ isOpen: false, customer: null });
 
   const startEdit = (c: Customer) => {
       setEditingId(c.id);
@@ -169,9 +174,18 @@ export const Customers: React.FC = () => {
                             <span className="flex items-center gap-1"><MapPin size={14}/> Unit {c.unitNumber || '?'}</span>
                         </div>
                     </div>
-                    <button onClick={() => startEdit(c)} className="text-sky-500 p-2 hover:bg-sky-50 rounded-full">
-                        <Edit2 size={18} />
-                    </button>
+                    <div className="flex gap-1">
+                        <button onClick={() => startEdit(c)} className="text-sky-500 p-2 hover:bg-sky-50 rounded-full">
+                            <Edit2 size={18} />
+                        </button>
+                        <button
+                            onClick={() => setConfirmDeleteModal({ isOpen: true, customer: c })}
+                            className="text-red-600 p-2 hover:bg-red-50 rounded-full"
+                            title="Delete Customer"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
                 </div>
                 {unpaid > 0 && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
@@ -374,6 +388,41 @@ export const Customers: React.FC = () => {
           </Modal>
         );
       })()}
+
+      {/* Delete Customer Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmDeleteModal.isOpen}
+        onClose={() => setConfirmDeleteModal({ isOpen: false, customer: null })}
+        onConfirm={async () => {
+          if (!confirmDeleteModal.customer) return;
+
+          const result = deleteCustomer(confirmDeleteModal.customer.id);
+
+          if (!result.success) {
+            alert(result.error);
+            return;
+          }
+
+          const activeOrderCount = getActiveOrders(orders).filter(
+            o => o.customerId === confirmDeleteModal.customer!.id && o.paymentStatus === 'paid'
+          ).length;
+
+          setConfirmDeleteModal({ isOpen: false, customer: null });
+
+          if (activeOrderCount > 0) {
+            alert(`Customer deleted. ${activeOrderCount} paid order(s) transferred to Walk-in Customer.`);
+          }
+        }}
+        title="Delete Customer?"
+        message={`Delete ${confirmDeleteModal.customer?.name}? ${
+          getActiveOrders(orders).filter(o => o.customerId === confirmDeleteModal.customer?.id && o.paymentStatus === 'paid').length
+        } paid order(s) will be transferred to Walk-in Customer.`}
+        confirmLabel="Yes, Delete Customer"
+        variant="danger"
+        requiresTypeConfirmation={true}
+        typeConfirmationWord="DELETE"
+        isDangerous={true}
+      />
     </div>
   );
 };

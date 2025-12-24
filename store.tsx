@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order, MenuItem, Customer, Ingredient } from './types';
+import { getActiveOrders } from './utils/orderFilters';
 
 interface FlashSaleItem {
   price: number;
@@ -43,6 +44,7 @@ interface AppState {
   // Customers
   addCustomer: (customer: Customer) => void;
   updateCustomer: (id: string, updates: Partial<Customer>) => void;
+  deleteCustomer: (id: string) => { success: boolean; error?: string };
 
   // Import
   importMenuItems: (items: MenuItem[], replaceAll?: boolean) => void;
@@ -306,6 +308,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCustomers(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
   };
 
+  const deleteCustomer = (id: string): { success: boolean; error?: string } => {
+    const customer = state.customers.find(c => c.id === id);
+    if (!customer) {
+      return { success: false, error: 'Customer not found' };
+    }
+
+    // CRITICAL: Block deletion if customer has unpaid orders
+    const customerUnpaidOrders = getActiveOrders(state.orders).filter(
+      o => o.customerId === id && o.paymentStatus !== 'paid'
+    );
+
+    if (customerUnpaidOrders.length > 0) {
+      const unpaidAmount = customerUnpaidOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+      return {
+        success: false,
+        error: `Cannot delete customer with ${customerUnpaidOrders.length} unpaid order(s) totaling ${unpaidAmount} AED. Customer must pay first.`
+      };
+    }
+
+    // Check if customer has any active orders (paid or reserved)
+    const customerActiveOrders = getActiveOrders(state.orders).filter(
+      o => o.customerId === id
+    );
+
+    if (customerActiveOrders.length > 0) {
+      // Has paid/reserved orders - transfer to Walk-in
+      let walkInCustomer = state.customers.find(c => c.phone === 'N/A' && c.name === 'Walk-in Customer');
+
+      if (!walkInCustomer) {
+        // Create Walk-in customer if doesn't exist
+        walkInCustomer = {
+          id: 'walk-in-' + Date.now(),
+          name: 'Walk-in Customer',
+          phone: 'N/A',
+          unitNumber: '',
+          floor: '',
+          building: '',
+          location: '',
+          totalSpent: 0,
+          totalOrders: 0
+        };
+        setCustomers(prev => [...prev, walkInCustomer!]);
+      }
+
+      // Transfer all orders to Walk-in
+      setOrders(prev => prev.map(order => {
+        if (order.customerId === id) {
+          return {
+            ...order,
+            customerId: walkInCustomer!.id,
+            customerName: walkInCustomer!.name,
+            customerPhone: walkInCustomer!.phone,
+            transferredFrom: customer.name // Track original customer
+          };
+        }
+        return order;
+      }));
+    }
+
+    // Remove customer from list
+    setCustomers(prev => prev.filter(c => c.id !== id));
+
+    return { success: true };
+  };
+
   // --- System ---
   const resetDailyData = () => {
     // Clear all orders
@@ -360,7 +427,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       updateMenu, addMenuItem, publishDailyMenu, getRemainingStock, toggleMenuAvailability, resetDailyStock,
       setFlashSale, clearFlashSale, getFlashSalePrice, isItemOnFlashSale,
       updateInventory, addInventoryItem,
-      addCustomer, updateCustomer,
+      addCustomer, updateCustomer, deleteCustomer,
       importMenuItems, importCustomers,
       resetDailyData, fullReset
     }}>
