@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Button, Modal } from '../components/UI';
 import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
+import { CustomerDiscountModal } from '../components/CustomerDiscountModal';
 import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone, Check } from 'lucide-react';
 import { Order, MenuItem, Customer, ParsedOrderResult } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
@@ -22,6 +23,12 @@ export const Orders: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isFlashSale, setIsFlashSale] = useState(false);
   const [flashSaleDiscount, setFlashSaleDiscount] = useState(5);
+
+  // Customer discount state
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountType, setDiscountType] = useState<'percentage' | 'item' | null>(null);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [itemDiscounts, setItemDiscounts] = useState<{[itemId: string]: number}>({});
 
   // WhatsApp Paste Modal
   const [isPasteModalOpen, setPasteModalOpen] = useState(false);
