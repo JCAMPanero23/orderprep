@@ -26,6 +26,23 @@ export const CustomerDiscountModal: React.FC<CustomerDiscountModalProps> = ({
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [itemDiscounts, setItemDiscounts] = useState<{ [itemId: string]: number }>({});
 
+  // Pre-fill item discounts with flash sale amounts when modal opens
+  useEffect(() => {
+    if (isOpen && activeTab === 'item') {
+      const prefilledDiscounts: { [itemId: string]: number } = {};
+
+      cart.forEach(c => {
+        const flashPrice = getFlashSalePrice(c.item.id);
+        if (flashPrice !== null) {
+          const flashDiscount = c.item.price - flashPrice;
+          prefilledDiscounts[c.item.id] = flashDiscount;
+        }
+      });
+
+      setItemDiscounts(prefilledDiscounts);
+    }
+  }, [isOpen, activeTab]);
+
   // Calculate totals
   const originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
 
@@ -133,8 +150,85 @@ export const CustomerDiscountModal: React.FC<CustomerDiscountModalProps> = ({
           )}
 
           {activeTab === 'item' && (
-            <div className="text-slate-500">
-              Item-by-item discount coming next...
+            <div className="space-y-3">
+              {cart.map(c => {
+                const flashPrice = getFlashSalePrice(c.item.id);
+                const itemDiscount = itemDiscounts[c.item.id] || 0;
+                const discountedPrice = c.item.price - itemDiscount;
+                const isInvalid = itemDiscount > c.item.price;
+
+                return (
+                  <div key={c.item.id} className="p-3 border border-slate-200 rounded-lg">
+                    {/* Item Header */}
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-medium text-slate-900">{c.item.name}</h4>
+                        <p className="text-xs text-slate-500">Qty: {c.qty}</p>
+                      </div>
+                      {flashPrice !== null && (
+                        <Badge variant="warning" className="text-xs">Flash Sale</Badge>
+                      )}
+                    </div>
+
+                    {/* Price Display */}
+                    <div className="flex items-center gap-2 mb-2 text-sm">
+                      <span className={flashPrice !== null ? 'line-through text-slate-400' : 'text-slate-600'}>
+                        {c.item.price} AED
+                      </span>
+                      {flashPrice !== null && (
+                        <span className="text-amber-600 font-medium">{flashPrice} AED</span>
+                      )}
+                    </div>
+
+                    {/* Discount Input */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-slate-600 whitespace-nowrap">Discount:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={c.item.price}
+                        value={itemDiscount}
+                        onChange={(e) => {
+                          const val = Math.min(c.item.price, Math.max(0, Number(e.target.value)));
+                          setItemDiscounts(prev => ({ ...prev, [c.item.id]: val }));
+                        }}
+                        className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 ${
+                          isInvalid ? 'border-red-500' : 'border-slate-300'
+                        }`}
+                        placeholder="0"
+                      />
+                      <span className="text-sm text-slate-600">AED</span>
+                    </div>
+
+                    {/* Final Price Preview */}
+                    {itemDiscount > 0 && !isInvalid && (
+                      <div className="mt-2 text-sm">
+                        <span className="text-slate-600">Final price: </span>
+                        <span className="font-bold text-green-600">{discountedPrice} AED</span>
+                      </div>
+                    )}
+
+                    {/* Error Message */}
+                    {isInvalid && (
+                      <p className="mt-1 text-xs text-red-600">
+                        Discount cannot exceed item price
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Total Discount Summary */}
+              <div className="pt-3 border-t border-slate-200">
+                <div className="flex justify-between text-sm font-medium">
+                  <span className="text-slate-700">Total Discount:</span>
+                  <span className="text-purple-600">-{discountAmount.toFixed(0)} AED</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold mt-1">
+                  <span className="text-slate-900">Final Total:</span>
+                  <span className="text-green-600">{finalTotal.toFixed(0)} AED</span>
+                </div>
+              </div>
             </div>
           )}
         </div>
