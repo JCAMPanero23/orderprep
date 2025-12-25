@@ -86,6 +86,10 @@ export interface Order {
   originalAmount?: number; // Before discount
   discountAmount?: number; // Flash sale discount
   isFlashSale?: boolean; // Was this a flash sale order?
+  // Enhanced customer discount tracking
+  discountType?: 'percentage' | 'item' | 'flash_sale';
+  discountPercentage?: number; // If percentage discount (0-100)
+  itemDiscounts?: { [itemId: string]: number }; // Item-specific AED discounts
   paymentMethod?: 'cash' | 'transfer' | 'credit';
   // Order workflow tracking
   isWalkIn?: boolean; // Walk-in customer (skip reservation)

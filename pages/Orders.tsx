@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useAppStore } from '../store';
 import { Button, Modal } from '../components/UI';
 import { WhatsAppSendModal } from '../components/WhatsAppSendModal';
+import { CustomerDiscountModal } from '../components/CustomerDiscountModal';
 import { User, Trash2, Banknote, Clock, ClipboardPaste, Phone, Check } from 'lucide-react';
 import { Order, MenuItem, Customer, ParsedOrderResult } from '../types';
 import { confirmNonUAEPhone } from '../utils/phoneValidation';
@@ -22,6 +23,12 @@ export const Orders: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isFlashSale, setIsFlashSale] = useState(false);
   const [flashSaleDiscount, setFlashSaleDiscount] = useState(5);
+
+  // Customer discount state
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountType, setDiscountType] = useState<'percentage' | 'item' | null>(null);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+  const [itemDiscounts, setItemDiscounts] = useState<{[itemId: string]: number}>({});
 
   // WhatsApp Paste Modal
   const [isPasteModalOpen, setPasteModalOpen] = useState(false);
@@ -76,6 +83,24 @@ export const Orders: React.FC = () => {
     setShowCustomerResults(false);
   };
 
+  // Calculate current discount amount
+  const calculateCurrentDiscount = (): number => {
+    if (!discountType) return 0;
+
+    const originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+
+    if (discountType === 'percentage') {
+      return originalTotal * (discountPercentage / 100);
+    } else if (discountType === 'item') {
+      return cart.reduce((sum, c) => {
+        const itemDiscount = itemDiscounts[c.item.id] || 0;
+        return sum + (itemDiscount * c.qty);
+      }, 0);
+    }
+
+    return 0;
+  };
+
   const handleCheckout = (mode: 'reserve' | 'payCash' | 'payLater') => {
     if (cart.length === 0) return;
 
@@ -89,15 +114,25 @@ export const Orders: React.FC = () => {
     const finalName = customerName.trim() || 'Walk-in Customer';
 
     const items = cart.map(c => {
-        // Use flash sale price if item is on flash sale, otherwise use regular price
-        const flashPrice = getFlashSalePrice(c.item.id);
-        const priceToUse = flashPrice ?? c.item.price;
+        let priceToUse = c.item.price;
+
+        // Apply customer discount if active (overrides flash sale)
+        if (discountType === 'percentage') {
+          priceToUse = c.item.price * (1 - discountPercentage / 100);
+        } else if (discountType === 'item') {
+          const itemDiscount = itemDiscounts[c.item.id] || 0;
+          priceToUse = c.item.price - itemDiscount;
+        } else {
+          // No customer discount - check for flash sale price
+          const flashPrice = getFlashSalePrice(c.item.id);
+          priceToUse = flashPrice ?? c.item.price;
+        }
 
         return {
             menuItemId: c.item.id,
             name: c.item.name,
             quantity: c.qty,
-            priceAtOrder: priceToUse
+            priceAtOrder: Math.max(0, priceToUse) // Prevent negative prices
         };
     });
 
@@ -107,19 +142,24 @@ export const Orders: React.FC = () => {
     // Calculate totals
     const finalTotal = items.reduce((sum, i) => sum + (i.priceAtOrder * i.quantity), 0);
 
-    // For flash sale items, calculate the discount from original price
+    // Calculate original total and discount amount
     let originalTotal = finalTotal;
     let discountAmount = 0;
 
-    if (hasFlashSaleItems) {
+    // Customer discount takes priority
+    if (discountType) {
+        originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+        discountAmount = calculateCurrentDiscount();
+    }
+    // Flash sale items
+    else if (hasFlashSaleItems) {
         originalTotal = cart.reduce((sum, c) => {
             return sum + (c.item.price * c.qty);
         }, 0);
         discountAmount = originalTotal - finalTotal;
     }
-
     // Legacy manual flash sale discount (when user checks the flash sale checkbox)
-    if (isFlashSale && !hasFlashSaleItems) {
+    else if (isFlashSale && !hasFlashSaleItems) {
         discountAmount = flashSaleDiscount * cart.reduce((sum, c) => sum + c.qty, 0);
         originalTotal = finalTotal + discountAmount;
     }
@@ -150,9 +190,13 @@ export const Orders: React.FC = () => {
         customerPhone: customerPhone || 'N/A',
         items,
         totalAmount,
-        originalAmount: (hasFlashSaleItems || isFlashSale) ? originalTotal : undefined,
-        discountAmount: (hasFlashSaleItems || isFlashSale) ? discountAmount : undefined,
-        isFlashSale: hasFlashSaleItems || isFlashSale,
+        originalAmount: (discountType || hasFlashSaleItems || isFlashSale) ? originalTotal : undefined,
+        discountAmount: (discountType || hasFlashSaleItems || isFlashSale) ? discountAmount : undefined,
+        // New: Enhanced discount tracking
+        discountType: discountType || (hasFlashSaleItems ? 'flash_sale' : undefined),
+        discountPercentage: discountType === 'percentage' ? discountPercentage : undefined,
+        itemDiscounts: discountType === 'item' ? itemDiscounts : undefined,
+        isFlashSale: hasFlashSaleItems || isFlashSale, // Keep for backward compatibility
         status: mode === 'reserve' ? 'reserved' : 'completed',
         paymentStatus: mode === 'payCash' ? 'paid' : 'unpaid',
         deliveryDate: new Date().toISOString(),
@@ -177,6 +221,10 @@ export const Orders: React.FC = () => {
       setSelectedCustomer(null);
       setIsFlashSale(false);
       setFlashSaleDiscount(5);
+      // NEW: Clear discount state
+      setDiscountType(null);
+      setDiscountPercentage(0);
+      setItemDiscounts({});
       return;
     }
 
@@ -341,6 +389,10 @@ export const Orders: React.FC = () => {
       setSelectedCustomer(null);
       setIsFlashSale(false);
       setFlashSaleDiscount(5);
+      // NEW: Clear discount state
+      setDiscountType(null);
+      setDiscountPercentage(0);
+      setItemDiscounts({});
       setPendingOrderAction(null);
     }
   };
@@ -581,44 +633,47 @@ export const Orders: React.FC = () => {
                 </div>
             )}
             
-            {/* Customer-Specific Discount Toggle */}
+            {/* NEW: Customer Discount Button */}
             {cart.length > 0 && (
-                <div className="mb-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={isFlashSale}
-                            onChange={(e) => setIsFlashSale(e.target.checked)}
-                            className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
-                        />
-                        <span className="font-bold text-sky-900 text-sm">👤 Customer Discount</span>
-                    </label>
-                    {isFlashSale && (
-                        <div className="mt-2 flex items-center gap-2">
-                            <input
-                                type="number"
-                                value={flashSaleDiscount}
-                                onChange={(e) => setFlashSaleDiscount(Number(e.target.value))}
-                                className="w-20 px-2 py-1 border border-sky-300 rounded text-center font-bold"
-                                min="1"
-                                max="10"
-                            />
-                            <span className="text-xs text-sky-800">AED off per item</span>
-                        </div>
+                <Button
+                    variant="outline"
+                    onClick={() => setDiscountModalOpen(true)}
+                    className="mb-3 w-full bg-purple-50 border-purple-300 text-purple-900 hover:bg-purple-100"
+                >
+                    {discountType ? (
+                        <span className="flex items-center justify-center gap-2">
+                            ✏️ Edit Discount
+                            <span className="ml-2 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full font-bold">
+                                -{calculateCurrentDiscount().toFixed(2)} AED
+                            </span>
+                        </span>
+                    ) : (
+                        <span>💰 Add Customer Discount</span>
                     )}
-                </div>
+                </Button>
             )}
 
             <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-500 font-medium">{cart.reduce((a, b) => a + b.qty, 0)} items</span>
                 <div className="text-right">
-                    {(hasFlashSaleItems || isFlashSale) && (
+                    {(hasFlashSaleItems || isFlashSale || discountType) && (
                         <div className="text-sm text-slate-500 line-through">
-                            {isFlashSale ? totalCart : originalCart} AED
+                            {originalCart} AED
                         </div>
                     )}
                     <span className="text-3xl font-bold text-slate-900">
-                        {isFlashSale ? totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0)) : totalCart}
+                        {(() => {
+                            // Customer discount takes priority
+                            if (discountType) {
+                                return (originalCart - calculateCurrentDiscount()).toFixed(2);
+                            }
+                            // Legacy flash sale checkbox
+                            if (isFlashSale) {
+                                return (totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0))).toFixed(2);
+                            }
+                            // Flash sale items or regular price
+                            return totalCart.toFixed(2);
+                        })()}
                         <span className="text-sm font-normal text-slate-500"> AED</span>
                     </span>
                 </div>
@@ -863,6 +918,19 @@ export const Orders: React.FC = () => {
         onTemplateChange={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? handleTemplateChange : undefined}
         availableTemplates={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? RECEIPT_TEMPLATES : undefined}
         currentTemplateId={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? selectedTemplateId : undefined}
+      />
+
+      {/* Customer Discount Modal */}
+      <CustomerDiscountModal
+        isOpen={discountModalOpen}
+        onClose={() => setDiscountModalOpen(false)}
+        cart={cart}
+        getFlashSalePrice={getFlashSalePrice}
+        onApplyDiscount={(type, percentage, itemDisc) => {
+          setDiscountType(type);
+          setDiscountPercentage(percentage);
+          setItemDiscounts(itemDisc);
+        }}
       />
     </div>
   );
