@@ -13,6 +13,10 @@ interface CustomerDiscountModalProps {
     percentage: number,
     itemDiscounts: { [itemId: string]: number }
   ) => void;
+  // Current discount state for editing
+  currentType?: 'percentage' | 'item' | null;
+  currentPercentage?: number;
+  currentItemDiscounts?: { [itemId: string]: number };
 }
 
 export const CustomerDiscountModal: React.FC<CustomerDiscountModalProps> = ({
@@ -20,28 +24,43 @@ export const CustomerDiscountModal: React.FC<CustomerDiscountModalProps> = ({
   onClose,
   cart,
   getFlashSalePrice,
-  onApplyDiscount
+  onApplyDiscount,
+  currentType,
+  currentPercentage = 0,
+  currentItemDiscounts = {}
 }) => {
   const [activeTab, setActiveTab] = useState<'percentage' | 'item'>('percentage');
   const [discountPercentage, setDiscountPercentage] = useState<number>(0);
   const [itemDiscounts, setItemDiscounts] = useState<{ [itemId: string]: number }>({});
 
-  // Pre-fill item discounts with flash sale amounts when modal opens
+  // Initialize with current values when modal opens
   useEffect(() => {
-    if (isOpen && activeTab === 'item') {
-      const prefilledDiscounts: { [itemId: string]: number } = {};
+    if (isOpen) {
+      // Set tab based on current discount type
+      if (currentType === 'item') {
+        setActiveTab('item');
+      } else {
+        setActiveTab('percentage');
+      }
 
+      // Initialize percentage
+      setDiscountPercentage(currentPercentage);
+
+      // Initialize item discounts - merge current with flash sale pre-fills
+      const initialDiscounts: { [itemId: string]: number } = { ...currentItemDiscounts };
+
+      // Pre-fill flash sale items ONLY if they don't already have a discount
       cart.forEach(c => {
         const flashPrice = getFlashSalePrice(c.item.id);
-        if (flashPrice !== null) {
+        if (flashPrice !== null && !initialDiscounts[c.item.id]) {
           const flashDiscount = c.item.price - flashPrice;
-          prefilledDiscounts[c.item.id] = flashDiscount;
+          initialDiscounts[c.item.id] = flashDiscount;
         }
       });
 
-      setItemDiscounts(prefilledDiscounts);
+      setItemDiscounts(initialDiscounts);
     }
-  }, [isOpen, activeTab]);
+  }, [isOpen]);
 
   // Calculate totals
   const originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);

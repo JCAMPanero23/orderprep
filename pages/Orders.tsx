@@ -926,6 +926,9 @@ export const Orders: React.FC = () => {
         onClose={() => setDiscountModalOpen(false)}
         cart={cart}
         getFlashSalePrice={getFlashSalePrice}
+        currentType={discountType}
+        currentPercentage={discountPercentage}
+        currentItemDiscounts={itemDiscounts}
         onApplyDiscount={(type, percentage, itemDisc) => {
           setDiscountType(type);
           setDiscountPercentage(percentage);
