@@ -114,15 +114,25 @@ export const Orders: React.FC = () => {
     const finalName = customerName.trim() || 'Walk-in Customer';
 
     const items = cart.map(c => {
-        // Use flash sale price if item is on flash sale, otherwise use regular price
-        const flashPrice = getFlashSalePrice(c.item.id);
-        const priceToUse = flashPrice ?? c.item.price;
+        let priceToUse = c.item.price;
+
+        // Apply customer discount if active (overrides flash sale)
+        if (discountType === 'percentage') {
+          priceToUse = c.item.price * (1 - discountPercentage / 100);
+        } else if (discountType === 'item') {
+          const itemDiscount = itemDiscounts[c.item.id] || 0;
+          priceToUse = c.item.price - itemDiscount;
+        } else {
+          // No customer discount - check for flash sale price
+          const flashPrice = getFlashSalePrice(c.item.id);
+          priceToUse = flashPrice ?? c.item.price;
+        }
 
         return {
             menuItemId: c.item.id,
             name: c.item.name,
             quantity: c.qty,
-            priceAtOrder: priceToUse
+            priceAtOrder: Math.max(0, priceToUse) // Prevent negative prices
         };
     });
 
@@ -175,9 +185,13 @@ export const Orders: React.FC = () => {
         customerPhone: customerPhone || 'N/A',
         items,
         totalAmount,
-        originalAmount: (hasFlashSaleItems || isFlashSale) ? originalTotal : undefined,
-        discountAmount: (hasFlashSaleItems || isFlashSale) ? discountAmount : undefined,
-        isFlashSale: hasFlashSaleItems || isFlashSale,
+        originalAmount: (discountType || hasFlashSaleItems || isFlashSale) ? originalTotal : undefined,
+        discountAmount: (discountType || hasFlashSaleItems || isFlashSale) ? discountAmount : undefined,
+        // New: Enhanced discount tracking
+        discountType: discountType || (hasFlashSaleItems ? 'flash_sale' : undefined),
+        discountPercentage: discountType === 'percentage' ? discountPercentage : undefined,
+        itemDiscounts: discountType === 'item' ? itemDiscounts : undefined,
+        isFlashSale: hasFlashSaleItems || isFlashSale, // Keep for backward compatibility
         status: mode === 'reserve' ? 'reserved' : 'completed',
         paymentStatus: mode === 'payCash' ? 'paid' : 'unpaid',
         deliveryDate: new Date().toISOString(),
@@ -202,6 +216,10 @@ export const Orders: React.FC = () => {
       setSelectedCustomer(null);
       setIsFlashSale(false);
       setFlashSaleDiscount(5);
+      // NEW: Clear discount state
+      setDiscountType(null);
+      setDiscountPercentage(0);
+      setItemDiscounts({});
       return;
     }
 
@@ -366,6 +384,10 @@ export const Orders: React.FC = () => {
       setSelectedCustomer(null);
       setIsFlashSale(false);
       setFlashSaleDiscount(5);
+      // NEW: Clear discount state
+      setDiscountType(null);
+      setDiscountPercentage(0);
+      setItemDiscounts({});
       setPendingOrderAction(null);
     }
   };
@@ -880,6 +902,19 @@ export const Orders: React.FC = () => {
         onTemplateChange={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? handleTemplateChange : undefined}
         availableTemplates={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? RECEIPT_TEMPLATES : undefined}
         currentTemplateId={!isSoldOutMessage && pendingOrderAction?.action === 'paid' ? selectedTemplateId : undefined}
+      />
+
+      {/* Customer Discount Modal */}
+      <CustomerDiscountModal
+        isOpen={discountModalOpen}
+        onClose={() => setDiscountModalOpen(false)}
+        cart={cart}
+        getFlashSalePrice={getFlashSalePrice}
+        onApplyDiscount={(type, percentage, itemDisc) => {
+          setDiscountType(type);
+          setDiscountPercentage(percentage);
+          setItemDiscounts(itemDisc);
+        }}
       />
     </div>
   );
