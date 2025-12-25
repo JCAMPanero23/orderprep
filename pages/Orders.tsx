@@ -142,19 +142,24 @@ export const Orders: React.FC = () => {
     // Calculate totals
     const finalTotal = items.reduce((sum, i) => sum + (i.priceAtOrder * i.quantity), 0);
 
-    // For flash sale items, calculate the discount from original price
+    // Calculate original total and discount amount
     let originalTotal = finalTotal;
     let discountAmount = 0;
 
-    if (hasFlashSaleItems) {
+    // Customer discount takes priority
+    if (discountType) {
+        originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+        discountAmount = calculateCurrentDiscount();
+    }
+    // Flash sale items
+    else if (hasFlashSaleItems) {
         originalTotal = cart.reduce((sum, c) => {
             return sum + (c.item.price * c.qty);
         }, 0);
         discountAmount = originalTotal - finalTotal;
     }
-
     // Legacy manual flash sale discount (when user checks the flash sale checkbox)
-    if (isFlashSale && !hasFlashSaleItems) {
+    else if (isFlashSale && !hasFlashSaleItems) {
         discountAmount = flashSaleDiscount * cart.reduce((sum, c) => sum + c.qty, 0);
         originalTotal = finalTotal + discountAmount;
     }
@@ -639,7 +644,7 @@ export const Orders: React.FC = () => {
                         <span className="flex items-center justify-center gap-2">
                             ✏️ Edit Discount
                             <span className="ml-2 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full font-bold">
-                                -{calculateCurrentDiscount().toFixed(0)} AED
+                                -{calculateCurrentDiscount().toFixed(2)} AED
                             </span>
                         </span>
                     ) : (
@@ -660,14 +665,14 @@ export const Orders: React.FC = () => {
                         {(() => {
                             // Customer discount takes priority
                             if (discountType) {
-                                return (originalCart - calculateCurrentDiscount()).toFixed(0);
+                                return (originalCart - calculateCurrentDiscount()).toFixed(2);
                             }
                             // Legacy flash sale checkbox
                             if (isFlashSale) {
-                                return totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0));
+                                return (totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0))).toFixed(2);
                             }
                             // Flash sale items or regular price
-                            return totalCart;
+                            return totalCart.toFixed(2);
                         })()}
                         <span className="text-sm font-normal text-slate-500"> AED</span>
                     </span>

@@ -63,7 +63,7 @@ export const generateWhatsAppReceipt = (
 
   // Format items list with final (discounted) prices
   const itemsList = order.items
-    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(0)} AED`)
+    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(2)} AED`)
     .join('\n');
 
   // Build discount breakdown if customer discount exists
@@ -72,12 +72,12 @@ export const generateWhatsAppReceipt = (
     const subtotal = order.originalAmount || order.totalAmount;
     const discount = order.discountAmount || 0;
 
-    discountSection = `\n\nSubtotal: ${subtotal.toFixed(0)} AED\n`;
+    discountSection = `\n\nSubtotal: ${subtotal.toFixed(2)} AED\n`;
 
     if (order.discountType === 'percentage') {
-      discountSection += `Customer Discount (${order.discountPercentage}%): -${discount.toFixed(0)} AED`;
+      discountSection += `Customer Discount (${order.discountPercentage}%): -${discount.toFixed(2)} AED`;
     } else {
-      discountSection += `Customer Discount: -${discount.toFixed(0)} AED`;
+      discountSection += `Customer Discount: -${discount.toFixed(2)} AED`;
     }
   }
 
@@ -92,9 +92,9 @@ export const generateWhatsAppReceipt = (
   // For discounted orders, show breakdown before total
   if (discountSection) {
     // Insert discount section before the total line
-    message = message.replace(/{total}/g, `${order.totalAmount.toFixed(0)}${discountSection}`);
+    message = message.replace(/{total}/g, `${order.totalAmount.toFixed(2)}${discountSection}`);
   } else {
-    message = message.replace(/{total}/g, order.totalAmount.toFixed(0));
+    message = message.replace(/{total}/g, order.totalAmount.toFixed(2));
   }
 
   message = message.replace(/{paymentStatus}/g, paymentStatus);
@@ -107,7 +107,7 @@ export const generateReservationConfirmation = (
   order: Order
 ): string => {
   const itemsList = order.items
-    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(0)} AED`)
+    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(2)} AED`)
     .join('\n');
 
   // Build discount breakdown if customer discount exists
@@ -116,12 +116,12 @@ export const generateReservationConfirmation = (
     const subtotal = order.originalAmount || order.totalAmount;
     const discount = order.discountAmount || 0;
 
-    discountSection = `\n\nSubtotal: ${subtotal.toFixed(0)} AED`;
+    discountSection = `\n\nSubtotal: ${subtotal.toFixed(2)} AED`;
 
     if (order.discountType === 'percentage') {
-      discountSection += `\nCustomer Discount (${order.discountPercentage}%): -${discount.toFixed(0)} AED`;
+      discountSection += `\nCustomer Discount (${order.discountPercentage}%): -${discount.toFixed(2)} AED`;
     } else {
-      discountSection += `\nCustomer Discount: -${discount.toFixed(0)} AED`;
+      discountSection += `\nCustomer Discount: -${discount.toFixed(2)} AED`;
     }
   }
 
@@ -132,7 +132,7 @@ Order confirmed! Thanks! 🎉
 ${itemsList}
 ${discountSection}
 
-*Total: ${order.totalAmount.toFixed(0)} AED*
+*Total: ${order.totalAmount.toFixed(2)} AED*
 
 See you soon! 😊`;
 };
