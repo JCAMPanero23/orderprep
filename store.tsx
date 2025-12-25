@@ -175,12 +175,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const cancelOrderWithReason = (id: string, reason: string, itemIds?: string[]) => {
-    const order = state.orders.find(o => o.id === id);
+    const order = orders.find(o => o.id === id);
     if (!order) return;
 
     // Restore stock for all items in the order
     order.items.forEach(item => {
-      const menuItem = state.menu.find(m => m.id === item.menuItemId);
+      const menuItem = menu.find(m => m.id === item.menuItemId);
       if (menuItem && menuItem.dailyLimit !== undefined) {
         updateMenu(item.menuItemId, {
           dailyLimit: menuItem.dailyLimit + item.quantity
@@ -309,13 +309,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteCustomer = (id: string): { success: boolean; error?: string } => {
-    const customer = state.customers.find(c => c.id === id);
+    const customer = customers.find(c => c.id === id);
     if (!customer) {
       return { success: false, error: 'Customer not found' };
     }
 
     // CRITICAL: Block deletion if customer has unpaid orders
-    const customerUnpaidOrders = getActiveOrders(state.orders).filter(
+    const customerUnpaidOrders = getActiveOrders(orders).filter(
       o => o.customerId === id && o.paymentStatus !== 'paid'
     );
 
@@ -328,13 +328,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     // Check if customer has any active orders (paid or reserved)
-    const customerActiveOrders = getActiveOrders(state.orders).filter(
+    const customerActiveOrders = getActiveOrders(orders).filter(
       o => o.customerId === id
     );
 
     if (customerActiveOrders.length > 0) {
       // Has paid/reserved orders - transfer to Walk-in
-      let walkInCustomer = state.customers.find(c => c.phone === 'N/A' && c.name === 'Walk-in Customer');
+      let walkInCustomer = customers.find(c => c.phone === 'N/A' && c.name === 'Walk-in Customer');
 
       if (!walkInCustomer) {
         // Create Walk-in customer if doesn't exist
