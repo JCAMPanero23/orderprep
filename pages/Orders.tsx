@@ -83,6 +83,24 @@ export const Orders: React.FC = () => {
     setShowCustomerResults(false);
   };
 
+  // Calculate current discount amount
+  const calculateCurrentDiscount = (): number => {
+    if (!discountType) return 0;
+
+    const originalTotal = cart.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+
+    if (discountType === 'percentage') {
+      return originalTotal * (discountPercentage / 100);
+    } else if (discountType === 'item') {
+      return cart.reduce((sum, c) => {
+        const itemDiscount = itemDiscounts[c.item.id] || 0;
+        return sum + (itemDiscount * c.qty);
+      }, 0);
+    }
+
+    return 0;
+  };
+
   const handleCheckout = (mode: 'reserve' | 'payCash' | 'payLater') => {
     if (cart.length === 0) return;
 
@@ -588,32 +606,24 @@ export const Orders: React.FC = () => {
                 </div>
             )}
             
-            {/* Customer-Specific Discount Toggle */}
+            {/* NEW: Customer Discount Button */}
             {cart.length > 0 && (
-                <div className="mb-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={isFlashSale}
-                            onChange={(e) => setIsFlashSale(e.target.checked)}
-                            className="w-4 h-4 text-sky-600 rounded focus:ring-sky-500"
-                        />
-                        <span className="font-bold text-sky-900 text-sm">👤 Customer Discount</span>
-                    </label>
-                    {isFlashSale && (
-                        <div className="mt-2 flex items-center gap-2">
-                            <input
-                                type="number"
-                                value={flashSaleDiscount}
-                                onChange={(e) => setFlashSaleDiscount(Number(e.target.value))}
-                                className="w-20 px-2 py-1 border border-sky-300 rounded text-center font-bold"
-                                min="1"
-                                max="10"
-                            />
-                            <span className="text-xs text-sky-800">AED off per item</span>
-                        </div>
+                <Button
+                    variant="outline"
+                    onClick={() => setDiscountModalOpen(true)}
+                    className="mb-3 w-full bg-purple-50 border-purple-300 text-purple-900 hover:bg-purple-100"
+                >
+                    {discountType ? (
+                        <span className="flex items-center justify-center gap-2">
+                            ✏️ Edit Discount
+                            <span className="ml-2 px-2 py-0.5 bg-purple-600 text-white text-xs rounded-full font-bold">
+                                -{calculateCurrentDiscount().toFixed(0)} AED
+                            </span>
+                        </span>
+                    ) : (
+                        <span>💰 Add Customer Discount</span>
                     )}
-                </div>
+                </Button>
             )}
 
             <div className="flex items-center justify-between mb-3">
