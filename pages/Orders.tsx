@@ -651,13 +651,24 @@ export const Orders: React.FC = () => {
             <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-500 font-medium">{cart.reduce((a, b) => a + b.qty, 0)} items</span>
                 <div className="text-right">
-                    {(hasFlashSaleItems || isFlashSale) && (
+                    {(hasFlashSaleItems || isFlashSale || discountType) && (
                         <div className="text-sm text-slate-500 line-through">
-                            {isFlashSale ? totalCart : originalCart} AED
+                            {originalCart} AED
                         </div>
                     )}
                     <span className="text-3xl font-bold text-slate-900">
-                        {isFlashSale ? totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0)) : totalCart}
+                        {(() => {
+                            // Customer discount takes priority
+                            if (discountType) {
+                                return (originalCart - calculateCurrentDiscount()).toFixed(0);
+                            }
+                            // Legacy flash sale checkbox
+                            if (isFlashSale) {
+                                return totalCart - (flashSaleDiscount * cart.reduce((a, b) => a + b.qty, 0));
+                            }
+                            // Flash sale items or regular price
+                            return totalCart;
+                        })()}
                         <span className="text-sm font-normal text-slate-500"> AED</span>
                     </span>
                 </div>

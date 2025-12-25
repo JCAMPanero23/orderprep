@@ -107,16 +107,32 @@ export const generateReservationConfirmation = (
   order: Order
 ): string => {
   const itemsList = order.items
-    .map(item => `• ${item.quantity}x ${item.name}`)
+    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(0)} AED`)
     .join('\n');
+
+  // Build discount breakdown if customer discount exists
+  let discountSection = '';
+  if (order.discountType === 'percentage' || order.discountType === 'item') {
+    const subtotal = order.originalAmount || order.totalAmount;
+    const discount = order.discountAmount || 0;
+
+    discountSection = `\n\nSubtotal: ${subtotal.toFixed(0)} AED`;
+
+    if (order.discountType === 'percentage') {
+      discountSection += `\nCustomer Discount (${order.discountPercentage}%): -${discount.toFixed(0)} AED`;
+    } else {
+      discountSection += `\nCustomer Discount: -${discount.toFixed(0)} AED`;
+    }
+  }
 
   return `Hi ${order.customerName}! 👋
 
 Order confirmed! Thanks! 🎉
 
 ${itemsList}
+${discountSection}
 
-*Total: ${order.totalAmount} AED*
+*Total: ${order.totalAmount.toFixed(0)} AED*
 
 See you soon! 😊`;
 };
