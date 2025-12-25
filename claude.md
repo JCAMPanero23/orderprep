@@ -39,6 +39,23 @@ This entire application was enhanced and optimized using Claude Code (Anthropic'
   - Copy to clipboard or direct share
   - Payment receipt generation
 
+### 🎯 Customer Discount System
+- **Flexible Discount Options:**
+  - Percentage discount (0-100% on entire order total)
+  - Item-by-item discount (individual AED amounts per item)
+  - Flash sale integration (auto-pre-fill flash sale discounts)
+- **Smart Features:**
+  - Customer discount overrides flash sale prices
+  - Visual warning when overriding flash sales
+  - Live discount calculation preview
+  - Input validation (discount ≤ item price)
+  - Preserves discount values when editing
+- **WhatsApp Integration:**
+  - Discounted prices shown in receipts and confirmations
+  - Subtotal + discount breakdown display
+  - Professional discount formatting with decimals
+  - Works with all order types (Reserve, Pay Later, Pay Cash)
+
 ### ⚡ Flash Sale Management System
 - **Revenue Loss Tracking:**
   - Track every flash sale discount
@@ -500,6 +517,49 @@ npm run preview
   - Confirmed privacy fix (no allUsers in backup JSON)
   - Tested restore functionality with live data
 
+### Phase 14: Customer Discount Enhancement
+**Status**: ✅ **COMPLETE**
+- ✅ **Percentage Discount Modal**
+  - Apply 0-100% discount on entire order total
+  - Live preview showing original, discount, and final amounts
+  - Input validation and sanitization
+- ✅ **Item-by-Item Discount Tab**
+  - Individual AED discount amounts per cart item
+  - Flash sale prices auto-pre-fill when switching to item tab
+  - Shows flash sale badge for discounted items
+  - Real-time price preview per item
+  - Validation: discount cannot exceed item price
+- ✅ **Cart Integration**
+  - Replaced legacy flash sale checkbox with modern discount button
+  - Dynamic button label: "Add Customer Discount" or "Edit Discount -X AED"
+  - Customer discount overrides flash sale prices (with warning)
+  - Cart total preview reflects discount with decimals (XX.XX AED)
+  - Crossed-out original price when discount applied
+- ✅ **WhatsApp Receipt Formatting**
+  - Discounted prices shown in all receipts and confirmations
+  - Subtotal + discount breakdown for transparency
+  - Professional formatting: "Customer Discount (10%): -12.50 AED"
+  - Works with Reserve, Pay Later, and Pay Cash buttons
+- ✅ **Order Data Persistence**
+  - Saves `discountType` (percentage | item | flash_sale)
+  - Saves `discountPercentage` for percentage discounts
+  - Saves `itemDiscounts` map for item-by-item discounts
+  - Backward compatible with old orders (optional fields)
+- ✅ **Bug Fixes**
+  - Fixed cart total not reflecting discount amount
+  - Fixed reservation message missing discount breakdown
+  - Fixed discount calculation for customer discounts
+  - Fixed decimal support (changed .toFixed(0) to .toFixed(2))
+  - Fixed modal resetting non-flash-sale items when reopened
+- ✅ **State Management**
+  - Discount state clears after successful checkout
+  - Modal preserves values when reopening for editing
+  - Proper cleanup on walk-in and WhatsApp confirmation flows
+
+**Implementation Time:** ~6 hours (as estimated in plan)
+**Files Modified:** 4 files, ~418 insertions, ~44 deletions
+**Git Commits:** 12 commits (implementation + bug fixes)
+
 **Files Modified:**
 - `utils/backupSystem.ts` - Fixed export/restore key names, removed allUsers
 - `utils/backupTypes.ts` - Added AuthData interface, made allUsers optional
@@ -760,11 +820,20 @@ OrderPrep is a production-ready PWA that solves real problems for home food entr
 
 ---
 
-**Version:** 2.2.1
-**Last Updated:** December 24, 2025
+**Version:** 2.3.0
+**Last Updated:** December 26, 2025
 **Status:** Production Ready ✅ (Deployed on Vercel with Supabase Cloud Backups)
 **Author:** Enhanced with Claude Code
 **Repository:** https://github.com/JCAMPanero23/orderprep
+
+### Version 2.3.0 Highlights (December 26, 2025)
+- ✅ Phase 14: Customer Discount Enhancement complete
+- ✅ Percentage discount (0-100% on total)
+- ✅ Item-by-item discount with flash sale auto-pre-fill
+- ✅ Modal UI with live preview and validation
+- ✅ WhatsApp receipt formatting with discount breakdown
+- ✅ Decimal support for accurate currency display
+- ✅ Bug fixes: cart total, reservation message, modal reset
 
 ### Version 2.2.0 Highlights (December 24, 2025)
 - ✅ Phase 13: Supabase Cloud Backup Integration complete
