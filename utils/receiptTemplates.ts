@@ -61,19 +61,42 @@ export const generateWhatsAppReceipt = (
 ): string => {
   const template = RECEIPT_TEMPLATES.find(t => t.id === templateId) || RECEIPT_TEMPLATES[0];
 
-  // Format items list
+  // Format items list with final (discounted) prices
   const itemsList = order.items
-    .map(item => `• ${item.quantity}x ${item.name} - ${item.priceAtOrder * item.quantity} AED`)
+    .map(item => `• ${item.quantity}x ${item.name} - ${(item.priceAtOrder * item.quantity).toFixed(0)} AED`)
     .join('\n');
 
+  // Build discount breakdown if customer discount exists
+  let discountSection = '';
+  if (order.discountType === 'percentage' || order.discountType === 'item') {
+    const subtotal = order.originalAmount || order.totalAmount;
+    const discount = order.discountAmount || 0;
+
+    discountSection = `\n\nSubtotal: ${subtotal.toFixed(0)} AED\n`;
+
+    if (order.discountType === 'percentage') {
+      discountSection += `Customer Discount (${order.discountPercentage}%): -${discount.toFixed(0)} AED`;
+    } else {
+      discountSection += `Customer Discount: -${discount.toFixed(0)} AED`;
+    }
+  }
+
   // Payment status
-  const paymentStatus = order.paymentStatus === 'paid' ? 'Paid' : 'Pending Payment';
+  const paymentStatus = order.paymentStatus === 'paid' ? 'Paid ✅' : 'Pending Payment';
 
   // Replace variables
   let message = template.content;
   message = message.replace(/{customerName}/g, order.customerName);
   message = message.replace(/{items}/g, itemsList);
-  message = message.replace(/{total}/g, order.totalAmount.toString());
+
+  // For discounted orders, show breakdown before total
+  if (discountSection) {
+    // Insert discount section before the total line
+    message = message.replace(/{total}/g, `${order.totalAmount.toFixed(0)}${discountSection}`);
+  } else {
+    message = message.replace(/{total}/g, order.totalAmount.toFixed(0));
+  }
+
   message = message.replace(/{paymentStatus}/g, paymentStatus);
 
   return message;
